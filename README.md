@@ -1,36 +1,175 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sectors AI Advisor
 
-## Getting Started
+**Sectors Hackathon 2026 · Track 1: AI Agents & Assistants**
 
-First, run the development server:
+AI-powered investment assistant for Indonesian retail investors. Translates complex IDX market data into plain-language insights with in-line glossary chips, daily market briefs, and watchlist tracking.
+
+---
+
+## 🚀 Quick Start
 
 ```bash
+# 1. Clone & install
+npm install
+
+# 2. Start dev server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Open http://localhost:3000
+
+# 3. Build for production
+npm run build
+npm start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## ⚙️ Setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 1. Get API Keys
 
-## Learn More
+| Service | Where to get it |
+|---|---|
+| **Sectors API** | https://sectors.app/api *(requires Sectors Insider plan)* |
+| **Anthropic Claude** | https://console.anthropic.com/settings/keys |
+| **OpenAI GPT-4o** | https://platform.openai.com/api-keys |
+| **DeepSeek V3** | https://platform.deepseek.com/api-docs/api |
+| **OpenRouter** | https://openrouter.ai/sign-up *(gateway for 500+ models)* |
+| **nexotao** | https://nexotao.com *(Indonesian gateway, IDR pricing)* |
 
-To learn more about Next.js, take a look at the following resources:
+> Hackathon participants receive **500 free Sectors API credits** upon completing onboarding.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 2. Enter Keys in the App
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Open **Settings** tab (bottom nav) and fill in:
+- `Sectors API Key`
+- Choose LLM provider: **Anthropic Claude**, **OpenAI GPT-4o**, **DeepSeek V3**, or **Other (OpenAI-compatible)**
 
-## Deploy on Vercel
+#### Custom LLM Gateway (OpenRouter, nexotao, etc.)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Select **Other (OpenAI-compatible)** and fill in:
+- **API Key** — from your gateway provider
+- **Base URL** — e.g. `https://openrouter.ai/api/v1`
+- **Model Name** — e.g. `deepseek/deepseek-chat-v3-0324`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Quick-fill buttons are provided for common setups:
+- 📡 OpenRouter + DeepSeek V3
+- 🤖 OpenRouter + Claude Sonnet 4
+- 🏠 LM Studio (local)
+- 🇮🇩 nexotao + DeepSeek
+
+**Supports any OpenAI-compatible gateway** including OpenRouter, nexotao, Azure OpenAI, LM Studio, Ollama, and more.
+
+### 3. Complete Onboarding
+
+On first launch the app shows a 4-step onboarding:
+1. Choose language (Bahasa Indonesia / English)
+2. Select market sectors of interest
+3. Enable Daily Market Brief
+4. Agree to the financial disclaimer
+
+---
+
+## ✨ Features
+
+### 💬 Chat Interface
+- Ask questions in Bahasa Indonesia or English
+- Sectors API data fetched live as context for the LLM
+- In-line **[TERM] chips** — click any financial term to see it explained in a slide-up glossary panel
+- Guardrails: blocks trade execution requests, crypto/forex queries, price predictions
+- Financial disclaimer on every response
+- Data citation panel (shows which Sectors API endpoints were used)
+
+### 📊 Daily Market Brief
+- Generates a plain-language daily market summary
+- Pulls: top gainers, top losers, foreign investor net flow, latest news
+- Rendered as a formatted card with AI-generated analysis
+- No backend needed — works entirely client-side
+
+### 📋 Watchlist
+- Add stocks by ticker symbol (e.g. BBCA, BBRI, TLKM)
+- Shows key metrics: P/E, PBV, ROE, DER
+- Add from chat using the watchlist feature
+
+### ⚙️ Settings
+- API key management with credit balance checker
+- LLM provider switcher (Claude / GPT-4o / DeepSeek)
+- Language toggle (ID / EN)
+- Reset all data
+
+---
+
+## 🛡️ Guardrails
+
+The bot enforces these rules on every query:
+
+| Keyword Pattern | Response |
+|---|---|
+| `beli`, `jual`, `order`, `buy`, `sell` | "I cannot help with transactions. Please use an OJK-registered broker." |
+| `crypto`, `bitcoin`, `forex` | "I focus on IDX-listed Indonesian stocks only." |
+| `prediksi`, `forecast`, `akan naik` | "I cannot predict future prices. I can analyze historical data." |
+
+---
+
+## 📁 Project Structure
+
+```
+src/
+├── app/
+│   ├── page.tsx              # Root — routes to onboarding or MainShell
+│   ├── onboarding/page.tsx   # 4-step onboarding flow
+│   ├── chat/page.tsx         # Main chat interface
+│   ├── daily-brief/page.tsx  # Daily market brief
+│   ├── watchlist/page.tsx    # Watchlist tracker
+│   ├── settings/page.tsx     # API key & preferences
+│   └── globals.css
+├── components/
+│   ├── MainShell.tsx         # Bottom nav + tab routing
+│   └── GlossaryPanel.tsx     # Slide-up glossary panel
+└── lib/
+    ├── types.ts              # TypeScript types
+    ├── i18n.ts               # ID/EN string translations
+    ├── store.ts              # Zustand + localStorage state
+    ├── sectorsApi.ts         # Sectors REST API client
+    └── llmProviders.ts       # Anthropic / OpenAI / DeepSeek abstraction
+```
+
+---
+
+## 🏗️ Architecture
+
+```
+User query (Bahasa / English)
+    ↓
+Guardrail check (keyword blocklist)
+    ↓
+Sectors API → fetches relevant data (screener, company report, top movers, news)
+    ↓
+LLM (Claude / GPT-4o / DeepSeek)
+  System prompt: role + glossary + guardrails + disclaimer rules
+  User prompt: query + Sectors data + glossary terms + conversation history
+    ↓
+Response rendered with [TERM:slug:label] chips → interactive glossary
+    ↓
+Disclaimer appended automatically
+```
+
+---
+
+## 🎯 Submission Requirements
+
+- [x] Public GitHub repository
+- [ ] 1-minute teaser video
+- [ ] 3-minute judging video (problem → demo → technical)
+- [ ] One-sentence problem statement
+- [ ] Social media post (Instagram/LinkedIn/Threads/TikTok) tagging @Sectors
+
+**Deadline:** 8 October 2026 at 23:59 WIB
+
+---
+
+## 📝 Notes
+
+- API keys are stored in **browser localStorage** (pure frontend, no backend)
+- Sectors API credits: most endpoints cost **1 credit** per call
+- The LLM is abstracted behind a provider interface — swap providers in Settings with no code changes
+- **No automated trade execution** — the app analyzes and explains data only

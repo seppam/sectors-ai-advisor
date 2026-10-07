@@ -4,12 +4,8 @@
 
 import type {
   SectorsDataRef,
-  CompanySnapshot,
-  NewsItem,
-  ForeignFlowSummary,
-  SectorSnapshot,
 } from "./types";
-import { withCache, clearCache } from "./apiCache";
+import { withCache } from "./apiCache";
 
 // ============================================================
 // Jakarta Timezone Helpers (P1-4 fix)
@@ -27,7 +23,7 @@ export function getJakartaDate(): string {
 
 /** Get the last trading day (Mon–Fri) in Asia/Jakarta. */
 export function getLastTradingDay(): string {
-  let date = new Date(getJakartaDate() + "T00:00:00");
+  const date = new Date(getJakartaDate() + "T00:00:00");
   const day = date.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
   if (day === 0) date.setDate(date.getDate() - 2); // Sunday → Friday
   else if (day === 6) date.setDate(date.getDate() - 1); // Saturday → Friday
@@ -267,9 +263,13 @@ export async function fetchDailyBriefData(apiKey: string, sectors: string[]) {
   ]);
 
   return {
-    gainers: (gainers.data as any)?.results ?? [],
-    losers: (losers.data as any)?.results ?? [],
+    gainers: (gainers.data as SectorsListResponse)?.results ?? [],
+    losers: (losers.data as SectorsListResponse)?.results ?? [],
     foreignFlow: foreignFlow.data,
-    news: (news.data as any)?.articles ?? (news.data as any)?.results ?? [],
+    news: (news.data as SectorsNewsResponse)?.articles ?? (news.data as SectorsNewsResponse)?.results ?? [],
   };
 }
+
+// Inline response types to avoid @typescript-eslint/no-explicit-any
+interface SectorsListResponse { results?: unknown[] }
+interface SectorsNewsResponse { articles?: unknown[]; results?: unknown[] }

@@ -6,9 +6,22 @@ import { useWatchlistStore } from "@/lib/store";
 import { t } from "@/lib/i18n";
 import { getTopMoversCached, getForeignFlowCached, getNews, getLastTradingDay } from "@/lib/sectorsApi";
 import { callLLM, resolveModel } from "@/lib/llmProviders";
-import { Button, Card, StatCard, Spinner, EmptyState } from "@/components/ui";
+import { Button, Card, EmptyState } from "@/components/ui";
 import { PageContainer } from "@/components/layout";
 import { cn } from "@/lib/utils";
+
+// Inline types to avoid @typescript-eslint/no-explicit-any
+interface SectorsListItem {
+  symbol?: string;
+  name?: string;
+  company_name?: string;
+  last_close?: number | string;
+  price?: number | string;
+  change_percent?: number;
+  changePercent?: number;
+}
+interface ForeignFlowData { net_buy_foreign?: number; value_bought?: number; value_sold?: number; net_buy?: number; net_sell?: number }
+interface NewsArticle { title?: string; sector?: string; published_at?: string; source?: string; date?: string }
 
 function fmtMoney(amount: number): string {
   if (Math.abs(amount) >= 1e12) return `IDR ${(amount / 1e12).toFixed(2)}T`;
@@ -32,15 +45,14 @@ export default function DailyBriefPage() {
   const sectorsApiKey = useSettingsStore((s) => s.settings.sectorsApiKey);
   const llm = useSettingsStore((s) => s.settings.llm);
   const watchlistItems = useWatchlistStore((s) => s.items);
-  const watchlistSymbols = useMemo(() => watchlistItems.map((i) => i.symbol), [watchlistItems]);
   const strings = t(language);
 
   const [isLoading, setIsLoading] = useState(false);
   const [brief, setBrief] = useState<string | null>(null);
-  const [gainers, setGainers] = useState<any[]>([]);
-  const [losers, setLosers] = useState<any[]>([]);
-  const [foreignFlow, setForeignFlow] = useState<any>(null);
-  const [news, setNews] = useState<any[]>([]);
+  const [gainers, setGainers] = useState<SectorsListItem[]>([]);
+  const [losers, setLosers] = useState<SectorsListItem[]>([]);
+  const [foreignFlow, setForeignFlow] = useState<ForeignFlowData | null>(null);
+  const [news, setNews] = useState<NewsArticle[]>([]);
   const [error, setError] = useState("");
 
   const hasData = gainers.length > 0 || losers.length > 0 || !!brief;
@@ -66,10 +78,10 @@ export default function DailyBriefPage() {
         getNews(sectorsApiKey, { limit: 5 }).catch(() => null),
       ]);
 
-      const gainersData = (gainerRes?.data as any)?.results ?? [];
-      const losersData = (loserRes?.data as any)?.results ?? [];
-      const ffData = ffRes?.data as any ?? {};
-      const newsData = (newsRes?.data as any)?.articles ?? (newsRes?.data as any)?.results ?? [];
+      const gainersData = (gainerRes?.data as { results?: SectorsListItem[] })?.results ?? [];
+      const losersData = (loserRes?.data as { results?: SectorsListItem[] })?.results ?? [];
+      const ffData = ffRes?.data as ForeignFlowData ?? {};
+      const newsData = (newsRes?.data as { articles?: NewsArticle[]; results?: NewsArticle[] })?.articles ?? (newsRes?.data as { articles?: NewsArticle[]; results?: NewsArticle[] })?.results ?? [];
 
       setGainers(gainerRes ? gainersData : []);
       setLosers(loserRes ? losersData : []);
@@ -106,8 +118,8 @@ ${JSON.stringify(newsData.slice(0, 5), null, 2)}
       });
 
       setBrief(llmResponse.text);
-    } catch (err: any) {
-      setError(`${language === "id" ? "Gagal mengambil data" : "Failed to fetch data"}\n\n${err.message}`);
+    } catch (err: unknown) {
+      setError(`${language === "id" ? "Gagal mengambil data" : "Failed to fetch data"}\n\n${(err as Error).message}`);
     } finally {
       setIsLoading(false);
     }
@@ -152,7 +164,7 @@ ${JSON.stringify(newsData.slice(0, 5), null, 2)}
                 <span className="font-body-sm font-semibold text-success">{strings.topGainers}</span>
               </div>
               <div>
-                {gainers.map((g: any, i: number) => (
+                {gainers.map((g, i) => (
                   <div key={i} className="flex items-center justify-between px-3 py-2 border-b border-outline-variant last:border-0">
                     <div className="flex items-center gap-2">
                       <span className="font-label-caps text-on-surface-variant font-mono w-3">{i + 1}</span>
@@ -180,7 +192,7 @@ ${JSON.stringify(newsData.slice(0, 5), null, 2)}
                 <span className="font-body-sm font-semibold text-danger">{strings.topLosers}</span>
               </div>
               <div>
-                {losers.map((l: any, i: number) => (
+                {losers.map((l, i) => (
                   <div key={i} className="flex items-center justify-between px-3 py-2 border-b border-outline-variant last:border-0">
                     <div className="flex items-center gap-2">
                       <span className="font-label-caps text-on-surface-variant font-mono w-3">{i + 1}</span>
@@ -239,7 +251,7 @@ ${JSON.stringify(newsData.slice(0, 5), null, 2)}
                   <span className="font-body-sm font-semibold text-on-surface">{strings.recentNews}</span>
                 </div>
                 <div>
-                  {news.slice(0, 5).map((n: any, i: number) => (
+                  {news.slice(0, 5).map((n, i) => (
                     <div key={i} className="px-3 py-2.5 border-b border-outline-variant last:border-0">
                       <p className="font-body-sm text-on-surface-variant line-clamp-2 leading-snug">{n.title}</p>
                       <p className="font-label-caps text-on-surface-variant mt-0.5">{n.source} · {n.date ?? n.published_at ?? ""}</p>

@@ -19,7 +19,6 @@ interface UsagePanelProps {
 
 export default function UsagePanel({
   modelName,
-  sectorsBalance,
   language = "id",
 }: UsagePanelProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -37,7 +36,7 @@ export default function UsagePanel({
   const quotaLabel = language === "id" ? "Sisa Kuota" : "Remaining Quota";
   const sessionLabel = language === "id" ? "Estimasi Sesi Komputasi" : "Session Compute Estimate";
   const detailsLabel = language === "id" ? "Detail" : "Details";
-  const resetLabel = language === "id" ? "Reset" : "Reset";
+  const _resetLabel = language === "id" ? "Reset" : "Reset";
   const hideLabel = language === "id" ? "Sembunyikan" : "Hide";
 
   return (
@@ -165,7 +164,7 @@ export default function UsagePanel({
             {showDetails && (
               <div className="flex flex-col gap-1 max-h-48 overflow-y-auto no-scrollbar">
                 {events.map((event) => (
-                  <EventRow key={event.id} event={event} language={language} />
+                  <EventRow key={event.id} event={event} />
                 ))}
               </div>
             )}
@@ -180,7 +179,7 @@ export default function UsagePanel({
    Single event row
    ────────────────────────────────────────────────────────── */
 
-function EventRow({ event, language = "id" }: { event: UsageEvent; language?: "id" | "en" }) {
+function EventRow({ event }: { event: UsageEvent }) {
   const time = new Date(event.timestamp).toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",

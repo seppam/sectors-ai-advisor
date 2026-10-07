@@ -87,23 +87,27 @@ function ReactMarkdownWithChips({
   const finalParts: React.ReactNode[] = [];
   const regex = /__TERM_([^_]+)_([^_]+)__/g;
   let lastIndex = 0;
-  let match: RegExpExecArray | null = null;
-
-  while ((match = regex.exec(escaped)) !== null) {
-    const before = escaped.slice(lastIndex, match.index);
-    if (before) finalParts.push(<ReactMarkdown key={`md_${lastIndex}`} remarkPlugins={[remarkGfm]}>{before}</ReactMarkdown>);
+  const chips: Array<{ slug: string; label: string; index: number; start: number; len: number }> = [];
+  let m: RegExpExecArray | null;
+  while ((m = regex.exec(escaped)) !== null) {
+    chips.push({ slug: m[1], label: m[2], index: m.index, start: lastIndex, len: m[0].length });
+    lastIndex = regex.lastIndex;
+  }
+  for (let i = 0; i < chips.length; i++) {
+    const chip = chips[i];
+    const before = escaped.slice(chip.start, chip.index);
+    if (before) finalParts.push(<ReactMarkdown key={`md_${chip.start}`} remarkPlugins={[remarkGfm]}>{before}</ReactMarkdown>);
     finalParts.push(
       <button
-        key={`chip_${match!.index}`}
+        key={`chip_${chip.index}`}
         type="button"
-        onClick={() => onTermClick?.(match![1])}
+        onClick={() => onTermClick?.(chip.slug)}
         className="inline-flex items-center gap-0.5 mx-0.5 bg-surface-container-high hover:bg-surface-bright text-primary rounded px-1.5 py-0.5 font-mono-metric-sm font-semibold cursor-pointer transition-all active:scale-95"
       >
-        <span>{match![2]}</span>
+        <span>{chip.label}</span>
         <span className="material-symbols-outlined text-[13px]">help_outline</span>
       </button>
     );
-    lastIndex = regex.lastIndex;
   }
   if (lastIndex < escaped.length) {
     finalParts.push(<ReactMarkdown key={`md_${lastIndex}`} remarkPlugins={[remarkGfm]}>{escaped.slice(lastIndex)}</ReactMarkdown>);

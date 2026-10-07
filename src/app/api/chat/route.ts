@@ -14,7 +14,7 @@ export const runtime = "edge";
 
 export async function POST(req: NextRequest) {
   try {
-    const { provider, modelName, customModel, messages, temperature, maxTokens, customBaseUrl } =
+    const { provider, modelName, customModel, messages, customBaseUrl } =
       await req.json();
 
     if (!provider || !messages?.length) {
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Reconstruct ChatContext from the messages array (last message = user query)
-    const lastUserMsg = [...messages].reverse().find((m: any) => m.role === "user");
+    const lastUserMsg = [...messages].reverse().find((m: { role?: string }) => m.role === "user");
     const userMessage = typeof lastUserMsg?.content === "string" ? lastUserMsg.content : "";
 
     const result = await callLLM({
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(result);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
 }

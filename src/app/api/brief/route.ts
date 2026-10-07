@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     const result = await fetchDailyBriefData(userKey || SECTORS_API_KEY, sectors);
 
     return NextResponse.json(result);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
 }

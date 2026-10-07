@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import type { SectorsDataRef } from "@/lib/types";
 
 interface CitationPanelProps {

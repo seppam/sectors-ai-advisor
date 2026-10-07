@@ -116,3 +116,21 @@ export interface WatchlistEntry extends WatchlistItem {
   roe: number;
   der: number;
 }
+
+// ============================================================
+// Company Report Data (from Sectors API /company/{symbol}/)
+// ============================================================
+
+export interface CompanyData {
+  company_name?: string;
+  summary?: {
+    last_close?: number;
+    daily_close_change?: number;
+    forward_pe?: number;
+    pb_mrq?: number;
+    roe_ttm?: number;
+    der_mrq?: number;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}

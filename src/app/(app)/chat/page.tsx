@@ -17,7 +17,14 @@ import GlossaryPanel from "@/components/GlossaryPanel";
 import { cn } from "@/lib/utils";
 import { recordSectorsCall } from "@/lib/usageTracker";
 import { GLOSSARY, parseTermChips } from "@/lib/glossary";
-import type { GlossaryTerm } from "@/lib/types";
+import type { GlossaryTerm, SectorsDataRef } from "@/lib/types";
+
+// Inline type to avoid @typescript-eslint/no-explicit-any
+interface CompanyReportData {
+  summary?: unknown;
+  financials?: unknown;
+  data?: unknown;
+}
 
 // ============================================================
 // Main Chat Page
@@ -46,8 +53,8 @@ export default function ChatPage() {
   // ============================================================
   // Sectors API query router
   // ============================================================
-  async function fetchSectorsData(query: string): Promise<{ data: string; citations: any[]; endpoints?: string[] }> {
-    const citations: any[] = [];
+  async function fetchSectorsData(query: string): Promise<{ data: string; citations: SectorsDataRef[]; endpoints?: string[] }> {
+    const citations: SectorsDataRef[] = [];
     const q = query.toLowerCase();
 
     try {
@@ -59,9 +66,9 @@ export default function ChatPage() {
         const knownExclusions = ['SAHAM', 'BURSA', 'INDO', 'GLOBAL', 'ASIA', 'EROPA', 'BEJ', 'IDX', 'IHSG', 'LQ45'];
         if (!knownExclusions.includes(ticker)) {
           const report = await getCompanyReportCached(sectorsApiKey, ticker, ["summary", "financials"]).catch(() => null);
-          if (report?.data && (report.data as any).summary) {
+          if (report?.data && (report.data as CompanyReportData).summary) {
             citations.push(report.refs);
-            const data = report.data as any;
+            const data = report.data as CompanyReportData;
             return {
               data: JSON.stringify({ [ticker]: { summary: data.summary, financials: data.financials } }),
               citations,
@@ -77,23 +84,20 @@ export default function ChatPage() {
           const reports = await Promise.all(
             symbols.map((s) => getCompanyReportCached(sectorsApiKey, s, ["summary", "financials"]).catch(() => null))
           );
-          const valid = reports.filter(Boolean);
+          const valid = reports.filter((r): r is NonNullable<typeof reports[number]> => r !== null);
           if (valid.length > 0) {
             // Build a proper JSON object keyed by symbol (not string concatenation)
-            const compareData: Record<string, any> = {};
+            const compareData: Record<string, CompanyReportData> = {};
             for (let i = 0; i < symbols.length; i++) {
               const sym = symbols[i];
-              const report: any = reports[i];
+              const report = reports[i];
               if (report?.data) {
-                compareData[sym] = {
-                  summary: report.data.summary,
-                  financials: report.data.financials,
-                };
+                compareData[sym] = report.data as CompanyReportData;
               }
             }
             const formatted = JSON.stringify(compareData);
-            citations.push(...valid.map((r: any) => r.refs));
-            return { data: formatted, citations, endpoints: valid.map((r: any) => r.refs.endpoint) };
+            citations.push(...valid.map((r) => r.refs));
+            return { data: formatted, citations, endpoints: valid.map((r) => r.refs.endpoint) };
           }
         }
       }
@@ -109,13 +113,13 @@ export default function ChatPage() {
       const res = await screenCompaniesCached(sectorsApiKey, query, 10);
       citations.push(res.refs);
       return { data: JSON.stringify(res.data, null, 2), citations };
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Sectors API error:", err);
       // P1-2: Return structured error so the chat UI can show a visible warning
       return {
         data: JSON.stringify({
           _error: true,
-          message: `Gagal mengambil data untuk intent "${q}". Error: ${err?.message || 'Unknown'}`,
+          message: "Gagal mengambil data untuk intent \"" + q + "\". Error: " + ((err as Error)?.message || "Unknown"),
           intent: q,
         }),
         citations,
@@ -136,7 +140,10 @@ export default function ChatPage() {
     const trimmed = message.trim();
     if (!trimmed || isLoading) return;
     if (!llm.apiKey) {
-      addMessage({ role: "assistant", content: `⚠️ LLM API Key belum diset.\n\n${language === "id" ? "Buka Pengaturan untuk menambahkan API key." : "Go to Settings to add your API key."}` });
+      const msg = language === "id"
+        ? "[!] LLM API Key belum diset.\n\nBuka Pengaturan untuk menambahkan API key."
+        : "[!] LLM API Key not set.\n\nGo to Settings to add your API key.";
+      addMessage({ role: "assistant", content: msg });
       return;
     }
 
@@ -158,13 +165,13 @@ export default function ChatPage() {
       
       // Track Sectors API credit usage for all branches
       if (endpoints && endpoints.length > 0) {
-        endpoints.forEach((ep: string) => recordSectorsCall({ endpoint: ep, userQuery: trimmed }));
+        endpoints.forEach((ep) => recordSectorsCall({ endpoint: ep, userQuery: trimmed }));
       } else {
         // Top-movers and screener also consume API credits
         recordSectorsCall({ endpoint: "/companies/", userQuery: trimmed });
       }
       const recentMessages = messages.slice(-6);
-      const historyStr = recentMessages.map((m) => `${m.role}: ${m.content}`).join("\n");
+      const historyStr = recentMessages.map((m) => m.role + ": " + m.content).join("\n");
 
       // Use optimized prompts (smart glossary selection, compressed history, trimmed data)
       // The optimized prompt builder selects only relevant glossary terms based on query keywords
@@ -185,9 +192,10 @@ export default function ChatPage() {
       // P1-8: Disclaimer is already in the system prompt — do NOT append programmatically
       const finalText = response.text || "Gagal mendapatkan respons dari AI.";
 
-      updateLastMessage(finalText, citations?.flat(Infinity) as any);
-    } catch (err: any) {
-      updateLastMessage(`❌ Gagal mendapatkan respons dari AI.\n\n\`\`\`\n${err.message}\n\`\`\``);
+      updateLastMessage(finalText, citations?.flat() as SectorsDataRef[]);
+    } catch (err: unknown) {
+      const errMsg = (err as Error).message;
+      updateLastMessage("❌ Gagal mendapatkan respons dari AI.\n\n```\n" + errMsg + "\n```\n");
     } finally {
       setIsLoading(false);
     }
@@ -271,7 +279,7 @@ export default function ChatPage() {
                     </button>
                     {showCitation[idx] && (
                       <div className="mt-1 bg-bg-tertiary border border-border-default rounded-lg p-2">
-                        {msg.citations.map((c: any, i: number) => (
+                        {msg.citations.map((c: import("@/lib/types").SectorsDataRef, i: number) => (
                           <div key={i} className="text-caption text-text-muted font-mono truncate">
                             • {c.endpoint} — {c.label}
                           </div>

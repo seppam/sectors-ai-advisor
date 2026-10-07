@@ -255,7 +255,7 @@ export function resetUsageSession(): void {
 }
 
 /** Get a human-readable cost summary */
-export function getUsageSummary(model?: string): {
+export function getUsageSummary(_model?: string): {
   llmCalls: number;
   sectorsCalls: number;
   totalTokens: number;

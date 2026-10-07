@@ -8,24 +8,54 @@ AI-powered investment assistant for Indonesian retail investors. Translates comp
 
 ## 🚀 Quick Start
 
-```bash
-# 1. Clone & install
-npm install
+### 1. Clone & Install
 
-# 2. Start dev server
+```bash
+npm install
+```
+
+### 2. Configure Environment
+
+Copy the example env file and fill in your API keys:
+
+```bash
+cp .env.local.example .env.local
+```
+
+Edit `.env.local` with your keys:
+
+```env
+# Sectors API Key (get yours at https://sectors.app — requires Insider plan)
+SECTORS_API_KEY=your_sectors_api_key_here
+
+# LLM Provider Keys (at least one required)
+ANTHROPIC_API_KEY=your_anthropic_key_here
+OPENAI_API_KEY=your_openai_key_here
+DEEPSEEK_API_KEY=your_deepseek_key_here
+OPENROUTER_API_KEY=your_openrouter_key_here
+```
+
+> 💡 **Keys set in `.env.local` stay server-side** — they are read by Next.js API routes and never exposed to the browser. Alternatively, keys can be entered in the app's Settings UI (stored in browser localStorage for convenience).
+
+### 3. Run
+
+```bash
 npm run dev
 # Open http://localhost:3000
+```
 
-# 3. Build for production
+### Build for Production
+
+```bash
 npm run build
 npm start
 ```
 
 ---
 
-## ⚙️ Setup
+## ⚙️ API Key Setup (Alternative: In-App)
 
-### 1. Get API Keys
+If you prefer not to use `.env.local`, open the **Settings** tab and enter keys directly:
 
 | Service | Where to get it |
 |---|---|
@@ -36,36 +66,13 @@ npm start
 | **OpenRouter** | https://openrouter.ai/sign-up *(gateway for 500+ models)* |
 | **nexotao** | https://nexotao.com *(Indonesian gateway, IDR pricing)* |
 
-> Hackathon participants receive **500 free Sectors API credits** upon completing onboarding.
-
-### 2. Enter Keys in the App
-
-Open **Settings** tab (bottom nav) and fill in:
-- `Sectors API Key`
-- Choose LLM provider: **Anthropic Claude**, **OpenAI GPT-4o**, **DeepSeek V3**, or **Other (OpenAI-compatible)**
-
-#### Custom LLM Gateway (OpenRouter, nexotao, etc.)
-
-Select **Other (OpenAI-compatible)** and fill in:
-- **API Key** — from your gateway provider
-- **Base URL** — e.g. `https://openrouter.ai/api/v1`
-- **Model Name** — e.g. `deepseek/deepseek-chat-v3-0324`
-
-Quick-fill buttons are provided for common setups:
+Quick-fill presets for common setups:
 - 📡 OpenRouter + DeepSeek V3
 - 🤖 OpenRouter + Claude Sonnet 4
-- 🏠 LM Studio (local)
+- 🏠 LM Studio (local, port 1234)
 - 🇮🇩 nexotao + DeepSeek
 
-**Supports any OpenAI-compatible gateway** including OpenRouter, nexotao, Azure OpenAI, LM Studio, Ollama, and more.
-
-### 3. Complete Onboarding
-
-On first launch the app shows a 4-step onboarding:
-1. Choose language (Bahasa Indonesia / English)
-2. Select market sectors of interest
-3. Enable Daily Market Brief
-4. Agree to the financial disclaimer
+Supports any **OpenAI-compatible gateway** — OpenRouter, nexotao, Azure OpenAI, LM Studio, Ollama, and more.
 
 ---
 
@@ -83,16 +90,15 @@ On first launch the app shows a 4-step onboarding:
 - Generates a plain-language daily market summary
 - Pulls: top gainers, top losers, foreign investor net flow, latest news
 - Rendered as a formatted card with AI-generated analysis
-- No backend needed — works entirely client-side
 
 ### 📋 Watchlist
 - Add stocks by ticker symbol (e.g. BBCA, BBRI, TLKM)
-- Shows key metrics: P/E, PBV, ROE, DER
+- Shows key metrics: P/E, PBV, ROE, DER, Dividend Yield
 - Add from chat using the watchlist feature
 
 ### ⚙️ Settings
 - API key management with credit balance checker
-- LLM provider switcher (Claude / GPT-4o / DeepSeek)
+- LLM provider switcher (Claude / GPT-4o / DeepSeek / Custom)
 - Language toggle (ID / EN)
 - Reset all data
 
@@ -115,22 +121,35 @@ The bot enforces these rules on every query:
 ```
 src/
 ├── app/
-│   ├── page.tsx              # Root — routes to onboarding or MainShell
-│   ├── onboarding/page.tsx   # 4-step onboarding flow
-│   ├── chat/page.tsx         # Main chat interface
-│   ├── daily-brief/page.tsx  # Daily market brief
-│   ├── watchlist/page.tsx    # Watchlist tracker
-│   ├── settings/page.tsx     # API key & preferences
-│   └── globals.css
+│   ├── (app)/                 # Route group — shares MainShell layout
+│   │   ├── chat/page.tsx      # Main chat interface
+│   │   ├── daily-brief/       # Daily market brief
+│   │   ├── watchlist/         # Watchlist tracker
+│   │   └── settings/          # API key & preferences
+│   ├── landing/page.tsx       # Landing / marketing page
+│   ├── onboarding/page.tsx    # 4-step onboarding flow
+│   ├── api/
+│   │   ├── chat/route.ts      # LLM proxy (keys stay server-side)
+│   │   ├── brief/route.ts     # Daily brief proxy
+│   │   ├── sectors/route.ts   # Sectors API proxy
+│   │   └── debug/guardrail/   # Dev-only guardrail tester
+│   └── page.tsx               # Root → redirects to /chat
 ├── components/
-│   ├── MainShell.tsx         # Bottom nav + tab routing
-│   └── GlossaryPanel.tsx     # Slide-up glossary panel
+│   ├── ui/                    # Stitch design system components
+│   ├── chat/                  # Chat-specific components
+│   ├── layout/                # TopBar, BottomNav, PageContainer
+│   ├── MainShell.tsx          # App shell (nav + content)
+│   └── GlossaryPanel.tsx      # Slide-up glossary panel
 └── lib/
-    ├── types.ts              # TypeScript types
-    ├── i18n.ts               # ID/EN string translations
-    ├── store.ts              # Zustand + localStorage state
-    ├── sectorsApi.ts         # Sectors REST API client
-    └── llmProviders.ts       # Anthropic / OpenAI / DeepSeek abstraction
+    ├── types.ts               # TypeScript types
+    ├── store.ts               # Zustand + localStorage state
+    ├── sectorsApi.ts          # Sectors REST API client
+    ├── llmProviders.ts        # Anthropic / OpenAI / DeepSeek abstraction
+    ├── optimizedPrompts.ts    # Prompt builder with token budgeting
+    ├── usageTracker.ts        # Token usage & Sectors credit tracking
+    ├── glossary.ts            # Financial terms glossary (central source)
+    ├── i18n.ts                # ID/EN string translations
+    └── apiCache.ts            # In-memory response cache
 ```
 
 ---
@@ -140,11 +159,11 @@ src/
 ```
 User query (Bahasa / English)
     ↓
-Guardrail check (keyword blocklist)
+Guardrail check (word-boundary regex blocklist)
     ↓
 Sectors API → fetches relevant data (screener, company report, top movers, news)
     ↓
-LLM (Claude / GPT-4o / DeepSeek)
+LLM (Claude / GPT-4o / DeepSeek / OpenAI-compatible)
   System prompt: role + glossary + guardrails + disclaimer rules
   User prompt: query + Sectors data + glossary terms + conversation history
     ↓
@@ -153,23 +172,73 @@ Response rendered with [TERM:slug:label] chips → interactive glossary
 Disclaimer appended automatically
 ```
 
+**API routes** (`/api/chat`, `/api/brief`, `/api/sectors`) act as secure proxies — LLM and Sectors API keys are read from `.env.local` server-side and never exposed to the browser.
+
+---
+
+## 🌐 Deploy to Vercel
+
+1. Push to GitHub
+2. Go to [vercel.com](https://vercel.com) → New Project → Import from GitHub
+3. Add environment variables in Vercel dashboard:
+   - `SECTORS_API_KEY`
+   - `ANTHROPIC_API_KEY` (and/or `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`, `OPENROUTER_API_KEY`)
+4. Deploy — Vercel auto-detects Next.js
+5. Add your Vercel URL to Settings → Custom Base URL (optional)
+
+---
+
+## 📸 Screenshots
+
+| Chat Interface | Landing Page |
+|---|---|
+| ![Chat](docs/screenshots/screenshot-chat.png) | ![Landing](docs/screenshots/screenshot-landing.png) |
+
+| Settings | Mobile View |
+|---|---|
+| ![Settings](docs/screenshots/screenshot-settings.png) | ![Mobile](docs/screenshots/shot3-mobile.png) |
+
 ---
 
 ## 🎯 Submission Requirements
 
 - [x] Public GitHub repository
-- [ ] 1-minute teaser video
-- [ ] 3-minute judging video (problem → demo → technical)
-- [ ] One-sentence problem statement
-- [ ] Social media post (Instagram/LinkedIn/Threads/TikTok) tagging @Sectors
+- [ ] **1-minute teaser video** — highlight the key feature or user flow
+- [ ] **3-minute judging video** — problem → demo → technical walkthrough
+- [ ] **Problem statement** (one sentence): _[WRITE YOUR OWN — see draft below]_
+- [ ] **Social media post** (Instagram/LinkedIn/Threads/TikTok) tagging @Sectors: _[WRITE YOUR OWN — see draft below]_
 
 **Deadline:** 8 October 2026 at 23:59 WIB
 
 ---
 
+## 📝 Draft: Problem Statement
+
+> Indonesian retail investors struggle to interpret complex IDX market data (P/E, PBV, ROE, DER) and often rely on speculation instead of data-driven analysis. Sectors AI Advisor bridges this gap with a chat interface that fetches live Sectors API data, explains financial terms in-line, and delivers a daily market brief — all in Bahasa Indonesia.
+
+---
+
+## 📝 Draft: Social Media Post
+
+> 🔍📊 Investasinya tapi bingung baca laporan keuangan?
+>
+> Sectors AI Advisor帮咱们印尼散户解决这个痛点!
+>
+> ✅ Tanya soal saham dalam Bahasa Indonesia
+> ✅ Langsung dapat data live dari Sectors API
+> ✅ Istilah keuangan解释in-line (PBV, P/E, ROE, DER)
+> ✅ Daily market brief otomatis
+>
+>-built untuk Sectors Hackathon 2026.
+> Cek demo: [YOUR_VERCEL_URL]
+>
+> #SectorsHackathon2026 #IndonesiaStocks #AIInvesting
+
+---
+
 ## 📝 Notes
 
-- API keys are stored in **browser localStorage** (pure frontend, no backend)
 - Sectors API credits: most endpoints cost **1 credit** per call
 - The LLM is abstracted behind a provider interface — swap providers in Settings with no code changes
 - **No automated trade execution** — the app analyzes and explains data only
+- Guardrail debug endpoint (`/api/debug/guardrail`) is blocked in production

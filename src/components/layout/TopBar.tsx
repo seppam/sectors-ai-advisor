@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import Link from "next/link";
@@ -11,7 +12,7 @@ const LOGO_URL =
 export default function TopBar() {
   const language = useSettingsStore((s) => s.settings.language);
   const updateSettings = useSettingsStore((s) => s.updateSettings);
-  const strings = t(language);
+  t(language); // ensure i18n is initialized
 
   function handleLanguageChange(lang: Language) {
     updateSettings({ language: lang });

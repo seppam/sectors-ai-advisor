@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSettingsStore } from "@/lib/store";
 import { useWatchlistStore } from "@/lib/store";
+import type { CompanyData } from "@/lib/types";
 import { t } from "@/lib/i18n";
 import { getCompanyReport } from "@/lib/sectorsApi";
 import { Button, Input, Card, StatCard, EmptyState } from "@/components/ui";
@@ -24,7 +25,7 @@ export default function WatchlistPage() {
   const [addInput, setAddInput] = useState("");
   const [addError, setAddError] = useState("");
   const [loading, setLoading] = useState<Record<string, boolean>>({});
-  const [stockData, setStockData] = useState<Record<string, any>>({});
+  const [stockData, setStockData] = useState<Record<string, CompanyData>>({});
 
   // P1-5: Auto-refresh prices on mount (stockData is local state, lost on reload)
   useEffect(() => {
@@ -34,7 +35,7 @@ export default function WatchlistPage() {
           setLoading((prev) => ({ ...prev, [item.symbol]: true }));
           getCompanyReport(sectorsApiKey, item.symbol, ["summary"])
             .then((res) => {
-              if (res?.data) setStockData((prev) => ({ ...prev, [item.symbol]: res.data as any }));
+              if (res?.data) setStockData((prev) => ({ ...prev, [item.symbol]: res.data as CompanyData }));
             })
             .catch(() => null)
             .finally(() => setLoading((prev) => ({ ...prev, [item.symbol]: false })));
@@ -62,8 +63,8 @@ export default function WatchlistPage() {
       try {
         const res = await getCompanyReport(sectorsApiKey, symbol, ["summary"]).catch(() => null);
         // P1-5: Only add to watchlist if API lookup actually succeeded with data
-        if (res?.data && (res.data as any).summary) {
-          setStockData((prev) => ({ ...prev, [symbol]: res.data }));
+        if (res?.data && (res.data as { summary?: unknown }).summary) {
+          setStockData((prev) => ({ ...prev, [symbol]: res.data as CompanyData }));
           addItem({ symbol, addedAt: Date.now() });
         } else {
           setAddError(

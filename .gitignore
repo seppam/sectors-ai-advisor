@@ -39,4 +39,4 @@ tsconfig.tsbuildinfo
 
 # Screenshots (keep in docs/)
 *.png
-!docs/*.png
+!docs/**/*.png

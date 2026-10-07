@@ -242,7 +242,7 @@ export function buildCompressedHistory(
   const recentMessages = messages.slice(-2);
   const olderMessages = messages.slice(0, -2);
 
-  let parts: string[] = [];
+  const parts: string[] = [];
 
   // Summarize older messages
   if (olderMessages.length > 0) {
@@ -301,7 +301,7 @@ export function optimizeSectorsData(jsonString: string, maxChars: number = 4000)
     if (data && typeof data === "object") {
       const keys = Object.keys(data);
       const perCompanyBudget = Math.floor(maxChars / Math.max(keys.length, 1));
-      const trimmedRecord: Record<string, any> = {};
+      const trimmedRecord: Record<string, unknown> = {};
       for (const key of keys) {
         const val = data[key];
         if (typeof val === "string") {
@@ -332,7 +332,7 @@ export function optimizeSectorsData(jsonString: string, maxChars: number = 4000)
 
 /** Recursively trim an object: remove nulls, round numbers, limit strings */
 // P1-7: Depth-aware trimming — top-level arrays get more items, financial series stay at 5
-function trimObject(obj: any, depth: number = 0): any {
+function trimObject<T extends object>(obj: T, depth: number = 0): T {
   if (depth > 3) return obj;  // max nesting depth
 
   if (Array.isArray(obj)) {
@@ -340,12 +340,12 @@ function trimObject(obj: any, depth: number = 0): any {
     // depth 1 = nested arrays → allow 10 items
     // depth 2+ = financial series → stick at 5
     const maxItems = depth === 0 ? 15 : depth === 1 ? 10 : 5;
-    if (obj.length <= maxItems) return obj.map((item: any) => trimObject(item, depth + 1));
-    return obj.slice(0, maxItems).map((item: any) => trimObject(item, depth + 1));
+    if (obj.length <= maxItems) return (obj as unknown[]).map((item: unknown) => trimObject(item as object, depth + 1) as T) as T;
+    return obj.slice(0, maxItems).map((item: T) => trimObject(item as object, depth + 1) as T) as T;
   }
 
   if (obj && typeof obj === "object") {
-    const trimmed: Record<string, any> = {};
+    const trimmed: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(obj)) {
       if (value === null || value === undefined || value === "") continue;
       // P1-7: Be generous with summary/news keys — don't aggressively trim top-level data
@@ -365,7 +365,7 @@ function trimObject(obj: any, depth: number = 0): any {
         trimmed[key] = value;
       }
     }
-    return trimmed;
+    return trimmed as T;
   }
 
   return obj;

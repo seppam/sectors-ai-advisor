@@ -6,12 +6,19 @@ export const metadata: Metadata = {
   description:
     "AI-powered investment assistant for Indonesian retail investors. Built on Sectors API + LLM. Sectors Hackathon 2026 Track 01: AI Agents & Assistants.",
   icons: {
-    icon: "/favicon.svg",
+    icon: "/logo.svg",
   },
   openGraph: {
     title: "Sectors AI Advisor",
-    description: "AI investment assistant for Indonesian markets",
+    description: "AI investment assistant for Indonesian markets — plain-language IDX insights powered by Sectors API.",
     type: "website",
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Sectors AI Advisor" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Sectors AI Advisor",
+    description: "Plain-language IDX insights powered by Sectors API.",
+    images: ["/og-image.png"],
   },
 };
 

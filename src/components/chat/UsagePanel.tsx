@@ -36,7 +36,6 @@ export default function UsagePanel({
   const quotaLabel = language === "id" ? "Sisa Kuota" : "Remaining Quota";
   const sessionLabel = language === "id" ? "Estimasi Sesi Komputasi" : "Session Compute Estimate";
   const detailsLabel = language === "id" ? "Detail" : "Details";
-  const _resetLabel = language === "id" ? "Reset" : "Reset";
   const hideLabel = language === "id" ? "Sembunyikan" : "Hide";
 
   return (

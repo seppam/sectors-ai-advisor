@@ -281,7 +281,7 @@ export default function LandingPage() {
             {/* Vertical connecting line */}
             <div className="absolute left-[20px] top-10 bottom-10 w-px bg-outline-variant" />
 
-            {HOW_IT_WORKS.map((step, i) => (
+            {HOW_IT_WORKS.map((step) => (
               <div key={step.step} className="flex gap-5 pb-10 last:pb-0">
                 {/* Step number circle */}
                 <div className="relative flex-shrink-0">

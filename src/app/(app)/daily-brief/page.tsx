@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { useSettingsStore } from "@/lib/store";
-import { useWatchlistStore } from "@/lib/store";
 import { t } from "@/lib/i18n";
 import { getTopMoversCached, getForeignFlowCached, getNews, getLastTradingDay } from "@/lib/sectorsApi";
 import { callLLM, resolveModel } from "@/lib/llmProviders";
@@ -44,7 +43,6 @@ export default function DailyBriefPage() {
   const language = useSettingsStore((s) => s.settings.language);
   const sectorsApiKey = useSettingsStore((s) => s.settings.sectorsApiKey);
   const llm = useSettingsStore((s) => s.settings.llm);
-  const watchlistItems = useWatchlistStore((s) => s.items);
   const strings = t(language);
 
   const [isLoading, setIsLoading] = useState(false);

@@ -11,8 +11,12 @@ AI-powered investment assistant for Indonesian retail investors. Translates comp
 ### 1. Clone & Install
 
 ```bash
+git clone https://github.com/seppam/sectors-ai-advisor.git
+cd sectors-ai-advisor
 npm install
 ```
+
+Requires Node.js 20+.
 
 ### 2. Configure Environment
 
@@ -35,7 +39,7 @@ DEEPSEEK_API_KEY=your_deepseek_key_here
 OPENROUTER_API_KEY=your_openrouter_key_here
 ```
 
-> 💡 **Keys set in `.env.local` stay server-side** — they are read by Next.js API routes and never exposed to the browser. Alternatively, keys can be entered in the app's Settings UI (stored in browser localStorage for convenience).
+> 💡 **How keys are used:** the app's default flow uses the keys you enter in **Settings** (stored only in your browser's localStorage and sent directly to Sectors / your LLM provider — there is no app backend storing them). The `.env.local` keys power the optional server proxy routes (`/api/chat`, `/api/sectors`, `/api/brief`) for deployments where you prefer to keep keys server-side.
 
 ### 3. Run
 
@@ -53,9 +57,9 @@ npm start
 
 ---
 
-## ⚙️ API Key Setup (Alternative: In-App)
+## ⚙️ API Key Setup (In-App)
 
-If you prefer not to use `.env.local`, open the **Settings** tab and enter keys directly:
+Open the **Settings** tab and enter your keys:
 
 | Service | Where to get it |
 |---|---|
@@ -108,11 +112,13 @@ Supports any **OpenAI-compatible gateway** — OpenRouter, nexotao, Azure OpenAI
 
 The bot enforces these rules on every query:
 
-| Keyword Pattern | Response |
-|---|---|
-| `beli`, `jual`, `order`, `buy`, `sell` | "I cannot help with transactions. Please use an OJK-registered broker." |
-| `crypto`, `bitcoin`, `forex` | "I focus on IDX-listed Indonesian stocks only." |
-| `prediksi`, `forecast`, `akan naik` | "I cannot predict future prices. I can analyze historical data." |
+| Intent | Example triggers | Response |
+|---|---|---|
+| Transactions / buy-sell advice | `beli`, `jual`, `buy`, `sell`, `target harga`, `stop loss` | Declines; points to an OJK-registered broker |
+| Price prediction | `prediksi harga`, `akan naik`, `besok`, `next week` | Declines to predict; offers historical/fundamental analysis |
+| Non-IDX markets | `crypto`, `bitcoin`, `forex`, `saham usa` | Explains the IDX-only scope |
+
+Guardrails run **before** any API call, so blocked requests cost no Sectors credits or LLM tokens.
 
 ---
 
@@ -172,7 +178,7 @@ Response rendered with [TERM:slug:label] chips → interactive glossary
 Disclaimer appended automatically
 ```
 
-**API routes** (`/api/chat`, `/api/brief`, `/api/sectors`) act as secure proxies — LLM and Sectors API keys are read from `.env.local` server-side and never exposed to the browser.
+**API routes** (`/api/chat`, `/api/brief`, `/api/sectors`) are optional server-side proxies that read keys from `.env.local`. The default UI flow calls the providers directly from the browser with the keys saved in Settings.
 
 ---
 
@@ -212,27 +218,9 @@ Disclaimer appended automatically
 
 ---
 
-## 📝 Draft: Problem Statement
+## 📝 Problem Statement
 
-> Indonesian retail investors struggle to interpret complex IDX market data (P/E, PBV, ROE, DER) and often rely on speculation instead of data-driven analysis. Sectors AI Advisor bridges this gap with a chat interface that fetches live Sectors API data, explains financial terms in-line, and delivers a daily market brief — all in Bahasa Indonesia.
-
----
-
-## 📝 Draft: Social Media Post
-
-> 🔍📊 Investasinya tapi bingung baca laporan keuangan?
->
-> Sectors AI Advisor帮咱们印尼散户解决这个痛点!
->
-> ✅ Tanya soal saham dalam Bahasa Indonesia
-> ✅ Langsung dapat data live dari Sectors API
-> ✅ Istilah keuangan解释in-line (PBV, P/E, ROE, DER)
-> ✅ Daily market brief otomatis
->
->-built untuk Sectors Hackathon 2026.
-> Cek demo: [YOUR_VERCEL_URL]
->
-> #SectorsHackathon2026 #IndonesiaStocks #AIInvesting
+> Dirancang untuk investor ritel Indonesia yang kesulitan memahami data pasar IDX (PER, PBV, ROE, DER), Sectors AI Advisor adalah asisten AI berbahasa Indonesia yang mengambil data live dari Sectors API, menjelaskan istilah keuangan secara in-line, dan menolak permintaan transaksi maupun prediksi harga.
 
 ---
 

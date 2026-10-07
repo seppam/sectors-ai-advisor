@@ -8,16 +8,16 @@ interface WelcomeStateProps {
 }
 
 const EXAMPLES_ID = [
+  "Apa itu PBV dan ROE?",
   "BBCA harganya udah mahal belum?",
   "Bandingkan BBCA dan BBRI",
-  "Saham bank mana yang ROE-nya di atas 15%?",
   "Top gainers hari ini",
 ];
 
 const EXAMPLES_EN = [
+  "What are PBV and ROE?",
   "Is BBCA overpriced right now?",
   "Compare BBCA vs BBRI fundamentals",
-  "Which banks have ROE above 15%?",
   "Today's top gainers",
 ];
 
@@ -27,9 +27,8 @@ export default function WelcomeState({ language = "id", onExampleClick }: Welcom
   return (
     <div className="flex flex-col items-center justify-center py-10 gap-5 text-center px-margin">
       {/* Icon */}
-      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary-container flex items-center justify-center">
-        <span className="material-symbols-outlined text-on-primary text-[28px]">forum</span>
-      </div>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/logo.svg" alt="" width={64} height={64} className="w-16 h-16 rounded-2xl shadow-elevated" />
 
       {/* Title */}
       <div>
@@ -41,6 +40,20 @@ export default function WelcomeState({ language = "id", onExampleClick }: Welcom
             ? "Tanyakan tentang saham, rasio keuangan, atau sektor Indonesia."
             : "Ask about stocks, financial ratios, or Indonesian sectors."}
         </p>
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+          {[
+            language === "id" ? "Data live Sectors API" : "Live Sectors API data",
+            language === "id" ? "Istilah dijelaskan" : "Terms explained",
+            language === "id" ? "Tanpa eksekusi transaksi" : "No trade execution",
+          ].map((label) => (
+            <span
+              key={label}
+              className="px-2.5 py-1 rounded-full text-[11px] font-semibold text-primary bg-primary/10 border border-primary/25"
+            >
+              {label}
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* Example question cards */}

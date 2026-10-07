@@ -4,8 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSettingsStore } from "@/lib/store";
 import { t } from "@/lib/i18n";
-import { Button, Card, Toggle } from "@/components/ui";
-import { PageContainer } from "@/components/layout";
+import { Button, Card } from "@/components/ui";
 import { cn } from "@/lib/utils";
 import type { Locale } from "@/lib/i18n";
 

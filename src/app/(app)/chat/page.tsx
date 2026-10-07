@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from "react";
 import { resolveModel } from "@/lib/llmProviders";
 import { useSettingsStore } from "@/lib/store";
 import { useChatStore } from "@/lib/store";
-import { useWatchlistStore } from "@/lib/store";
 import { t } from "@/lib/i18n";
 import { callLLM, checkGuardrail } from "@/lib/llmProviders";
 import {
@@ -26,6 +25,13 @@ interface CompanyReportData {
   data?: unknown;
 }
 
+// Common IDX tickers so lowercase input ("bbca") is still recognised.
+const KNOWN_TICKERS = new Set([
+  "BBCA", "BBRI", "BMRI", "BBNI", "BRIS", "BTPN", "TLKM", "ASII", "UNVR", "ICBP",
+  "INDF", "GOTO", "BUKA", "ANTM", "ADRO", "PTBA", "MDKA", "AMRT", "KLBF", "CPIN",
+  "EXCL", "ISAT", "SMGR", "INTP", "PGAS", "MAPI", "ACES", "HMSP", "GGRM", "BYAN",
+]);
+
 // ============================================================
 // Main Chat Page
 // ============================================================
@@ -38,8 +44,7 @@ export default function ChatPage() {
   const customModel = useSettingsStore((s) => s.settings.llm.customModel ?? "");
   const strings = t(language);
 
-  const { messages, addMessage, updateLastMessage } = useChatStore();
-  const { addItem: addToWatchlist } = useWatchlistStore();
+  const { messages, addMessage } = useChatStore();
 
   const [isLoading, setIsLoading] = useState(false);
   const [glossaryTerm, setGlossaryTerm] = useState<GlossaryTerm | null>(null);
@@ -59,22 +64,18 @@ export default function ChatPage() {
 
     try {
       // ── P1-1: Single-ticker intent detection (BEFORE screener fallback) ──
-      const upperQuery = query.toUpperCase();
-      const potentialTickers = upperQuery.match(/\b[A-Z]{4}\b/g) || [];
+      const potentialTickers = extractSymbols(query);
       if (potentialTickers.length === 1) {
         const ticker = potentialTickers[0];
-        const knownExclusions = ['SAHAM', 'BURSA', 'INDO', 'GLOBAL', 'ASIA', 'EROPA', 'BEJ', 'IDX', 'IHSG', 'LQ45'];
-        if (!knownExclusions.includes(ticker)) {
-          const report = await getCompanyReportCached(sectorsApiKey, ticker, ["summary", "financials"]).catch(() => null);
-          if (report?.data && (report.data as CompanyReportData).summary) {
-            citations.push(report.refs);
-            const data = report.data as CompanyReportData;
-            return {
-              data: JSON.stringify({ [ticker]: { summary: data.summary, financials: data.financials } }),
-              citations,
-              endpoints: [report.refs.endpoint],
-            };
-          }
+        const report = await getCompanyReportCached(sectorsApiKey, ticker, ["summary", "financials"]).catch(() => null);
+        if (report?.data && (report.data as CompanyReportData).summary) {
+          citations.push(report.refs);
+          const data = report.data as CompanyReportData;
+          return {
+            data: JSON.stringify({ [ticker]: { summary: data.summary, financials: data.financials } }),
+            citations,
+            endpoints: [report.refs.endpoint],
+          };
         }
       }
 
@@ -129,8 +130,12 @@ export default function ChatPage() {
   }
 
   function extractSymbols(query: string): string[] {
-    const matches = query.match(/\b[A-Z]{4}\b/g);
-    return [...new Set(matches ?? [])];
+    const NOT_TICKERS = new Set(["SAHAM", "BURSA", "INDO", "GLOBAL", "ASIA", "EROPA", "IDX", "IHSG", "LQ45", "ROE", "PBV", "DER", "ROA", "EPS", "TOP", "APA", "ITU", "DAN", "YANG"]);
+    const upper = (query.match(/\b[A-Z]{4}\b/g) ?? []).filter((x) => !NOT_TICKERS.has(x));
+    const lower = (query.toLowerCase().match(/\b[a-z]{4}\b/g) ?? [])
+      .map((x) => x.toUpperCase())
+      .filter((x) => KNOWN_TICKERS.has(x));
+    return [...new Set([...upper, ...lower])];
   }
 
   // ============================================================
@@ -139,20 +144,21 @@ export default function ChatPage() {
   async function handleSend(message: string) {
     const trimmed = message.trim();
     if (!trimmed || isLoading) return;
+
+    addMessage({ role: "user", content: trimmed });
+
+    // Guardrails run FIRST — blocked requests never need an API key or any network call.
+    const guardrail = checkGuardrail(trimmed, language);
+    if (guardrail.triggered) {
+      addMessage({ role: "assistant", content: guardrail.response! });
+      return;
+    }
+
     if (!llm.apiKey) {
       const msg = language === "id"
         ? "[!] LLM API Key belum diset.\n\nBuka Pengaturan untuk menambahkan API key."
         : "[!] LLM API Key not set.\n\nGo to Settings to add your API key.";
       addMessage({ role: "assistant", content: msg });
-      return;
-    }
-
-    addMessage({ role: "user", content: trimmed });
-
-    // Check guardrails first
-    const guardrail = checkGuardrail(trimmed, language);
-    if (guardrail.triggered) {
-      addMessage({ role: "assistant", content: guardrail.response! });
       return;
     }
 
@@ -192,10 +198,17 @@ export default function ChatPage() {
       // P1-8: Disclaimer is already in the system prompt — do NOT append programmatically
       const finalText = response.text || "Gagal mendapatkan respons dari AI.";
 
-      updateLastMessage(finalText, citations?.flat() as SectorsDataRef[]);
+      addMessage({
+        role: "assistant",
+        content: finalText,
+        citations: citations?.flat() as SectorsDataRef[],
+      });
     } catch (err: unknown) {
       const errMsg = (err as Error).message;
-      updateLastMessage("❌ Gagal mendapatkan respons dari AI.\n\n```\n" + errMsg + "\n```\n");
+      addMessage({
+        role: "assistant",
+        content: "❌ Gagal mendapatkan respons dari AI.\n\n```\n" + errMsg + "\n```\n",
+      });
     } finally {
       setIsLoading(false);
     }

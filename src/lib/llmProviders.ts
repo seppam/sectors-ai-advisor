@@ -143,44 +143,48 @@ export function checkGuardrail(
   const q = message.trim();
   const isID = lang === "id";
 
-  // P1-3: Word-boundary regexes — no substring false positives
-  // (prevents "pe" matching "perusahaan", "buy" matching "buyback", "beli" matching "pembelian")
-  const PROMPT_BLOCK_PATTERNS: RegExp[] = [
-    // Standalone trading words (word boundaries prevent "beli" matching "pembelian")
-    /\b(jual|beli|buy|sell|purchase)\b/gi,
-    // Trading intent phrases
-    /\b(rekomendasi\s+(beli|jual|hold|netral|buy|sell|hold))\b/gi,
-    /\b(jangan\s+(beli|jual|buy|sell))\b/gi,
-    /\b(worth\s+(to\s+)?(buy|jual))\b/gi,
-    /\b(ayo\s+(beli|jual|buy))\b/gi,
-    /\b(mending\s+(beli|jual))\b/gi,
-    /\b(layak\s+(beli|jual|collect))\b/gi,
-    /\b(harus\s+(beli|jual|buy|sell))\b/gi,
-    // Price manipulation keywords
-    /\b(target\s+(harga|harg)?)\b/gi,
-    /\b(stop\s*loss)\b/gi,
-    /\b(take\s*profit)\b/gi,
-    // Price predictions
-    /\b(next\s*(week|month|quarter|year)|minggu?\s*\S+\s*(lagi|ke|depan)|besok|bulan\s*(depan|ini))\b/gi,
-    /\b(akan\s+(naik|turun))\b/gi,
-    /\b(prediksi\s+harga)\b/gi,
-    /\b(forecast\s+harga)\b/gi,
+  // Word-boundary regexes — no substring false positives
+  // (prevents "beli" matching "pembelian", "buy" matching "buyback").
+  const TRANSACTION_PATTERNS: RegExp[] = [
+    /\b(jual|beli|buy|sell|purchase)\b/i,
+    /\b(rekomendasi\s+(beli|jual|hold|netral|buy|sell))\b/i,
+    /\b(worth\s+(to\s+)?(buy|jual))\b/i,
+    /\b(mending\s+(beli|jual))\b/i,
+    /\b(layak\s+(beli|jual))\b/i,
+    /\b(target\s+harga|price\s+target)\b/i,
+    /\b(stop\s*loss|take\s*profit)\b/i,
   ];
 
-  for (const pattern of PROMPT_BLOCK_PATTERNS) {
-    pattern.lastIndex = 0; // reset global regex state
-    if (pattern.test(q)) {
-      return {
-        triggered: true,
-        response: isID
-          ? "⚠️ Di Luar Cakupan\n\nSaya tidak dapat membantu transaksi. Saya hanya membantu analisis dan penjelasan data. Untuk berinvestasi, silakan gunakan platform broker yang terdaftar di OJK."
-          : "⚠️ Out of Scope\n\nI cannot help with transactions. I only assist with analysis and data explanations. To invest, please use a broker platform registered with OJK.",
-        lang,
-      };
-    }
+  const PREDICTION_PATTERNS: RegExp[] = [
+    /\b(next\s*(week|month|quarter|year))\b/i,
+    /\b(minggu|bulan|tahun)\s+depan\b/i,
+    /\b(besok|tomorrow)\b/i,
+    /\b(akan\s+(naik|turun)|will\s+(rise|fall|go\s+up|go\s+down))\b/i,
+    /\b(prediksi|forecast|ramalan)\s+harga\b/i,
+    /\b(price\s+(prediction|forecast))\b/i,
+  ];
+
+  if (PREDICTION_PATTERNS.some((re) => re.test(q))) {
+    return {
+      triggered: true,
+      response: isID
+        ? "⚠️ Di Luar Cakupan\n\nSaya tidak bisa memprediksi harga saham di masa depan. Yang bisa saya bantu: menganalisis data historis dan fundamental (PER, PBV, ROE, DER) dari Sectors API."
+        : "⚠️ Out of Scope\n\nI cannot predict future stock prices. I can help analyse historical data and fundamentals (P/E, PBV, ROE, DER) from the Sectors API.",
+      lang,
+    };
   }
 
-  // Non-IDX markets (still substring OK — these are clear intent signals)
+  if (TRANSACTION_PATTERNS.some((re) => re.test(q))) {
+    return {
+      triggered: true,
+      response: isID
+        ? "⚠️ Di Luar Cakupan\n\nSaya tidak dapat membantu transaksi atau memberi rekomendasi beli/jual. Saya hanya membantu analisis dan penjelasan data. Untuk berinvestasi, silakan gunakan platform broker yang terdaftar di OJK."
+        : "⚠️ Out of Scope\n\nI cannot help with transactions or buy/sell recommendations. I only assist with analysis and data explanations. To invest, please use a broker registered with OJK.",
+      lang,
+    };
+  }
+
+  // Non-IDX markets (substring is fine — these are clear intent signals)
   const cryptoKeywords = ["crypto", "bitcoin", "ethereum", "forex", "valas", "saham usa", "us stock"];
   const lower = q.toLowerCase();
   if (cryptoKeywords.some((kw) => lower.includes(kw))) {
@@ -251,7 +255,7 @@ export async function callLLM(options: CallLLMOptions): Promise<LLMResponse> {
   const userPrompt = prompts.userPrompt;
 
   // Log optimization info in development
-  if (prompts.optimizationNotes.length > 0) {
+  if (process.env.NODE_ENV !== "production" && prompts.optimizationNotes.length > 0) {
     console.log("[TokenOpt]", prompts.optimizationNotes.join(" | "), `| Est input: ~${prompts.estimatedInputTokens} tokens`);
   }
 

@@ -215,7 +215,7 @@ Captured from the verified live QA run (390×844) — see [`docs/QA-REPORT.md`](
 ```bash
 npx playwright install chromium
 npx playwright test                 # 28 e2e tests (no API keys needed)
-node scripts/qa-live.mjs            # live 10-flow QA + screen recording (needs QA_* keys in .env.local)
+node scripts/qa-live.mjs            # live 10-flow QA + screen recording to qa-recordings/ (needs QA_* keys in .env.local)
 ```
 
 ---
@@ -223,17 +223,7 @@ node scripts/qa-live.mjs            # live 10-flow QA + screen recording (needs 
 ## 🎬 Demo Videos
 
 | Video | Link |
-|---|---|
-| 1-minute teaser | https://youtu.be/K4uEjemUpfo |
-| 3-minute judging video (demo + technical walkthrough) | https://youtu.be/bpj0dAYByU0 |
-
----|---|
-| 1-minute teaser | https://youtu.be/K4uEjemUpfo |
-| 3-minute judging video (demo + technical walkthrough) | https://youtu.be/bpj0dAYByU0 |
-
-Video source (Remotion compositions, narration script, VO generator) lives in [`/video`](video); rendered `.mp4`/`.mp3` files are not committed.
-
----
+|---
 
 ## 🎯 Submission
 

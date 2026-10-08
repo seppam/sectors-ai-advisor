@@ -87,6 +87,7 @@ Supports any **OpenAI-compatible gateway** — OpenRouter, nexotao, Azure OpenAI
 - Sectors API data fetched live as context for the LLM
 - In-line **[TERM] chips** — click any financial term to see it explained in a slide-up glossary panel
 - Guardrails: blocks trade execution requests, crypto/forex queries, price predictions
+- Rendered Markdown answers (lists, bold, tables) and a **conversation history** drawer with auto-generated titles
 - Financial disclaimer on every response
 - Data citation panel (shows which Sectors API endpoints were used)
 
@@ -98,7 +99,6 @@ Supports any **OpenAI-compatible gateway** — OpenRouter, nexotao, Azure OpenAI
 ### 📋 Watchlist
 - Add stocks by ticker symbol (e.g. BBCA, BBRI, TLKM)
 - Shows key metrics: P/E, PBV, ROE, DER, Dividend Yield
-- Add from chat using the watchlist feature
 
 ### ⚙️ Settings
 - API key management with credit balance checker
@@ -175,7 +175,7 @@ LLM (Claude / GPT-4o / DeepSeek / OpenAI-compatible)
     ↓
 Response rendered with [TERM:slug:label] chips → interactive glossary
     ↓
-Disclaimer appended automatically
+Disclaimer enforced by the system prompt (no post-hoc string appending)
 ```
 
 **API routes** (`/api/chat`, `/api/brief`, `/api/sectors`) are optional server-side proxies that read keys from `.env.local`. The default UI flow calls the providers directly from the browser with the keys saved in Settings.
@@ -206,15 +206,21 @@ Disclaimer appended automatically
 
 ---
 
-## 🎯 Submission Requirements
+## 🎬 Demo Video
 
-- [x] Public GitHub repository
-- [ ] **1-minute teaser video** — highlight the key feature or user flow
-- [ ] **3-minute judging video** — problem → demo → technical walkthrough
-- [ ] **Problem statement** (one sentence): _[WRITE YOUR OWN — see draft below]_
-- [ ] **Social media post** (Instagram/LinkedIn/Threads/TikTok) tagging @Sectors: _[WRITE YOUR OWN — see draft below]_
+| Video | Link |
+|---|---|
+| 1-minute teaser | _TBD — add YouTube URL_ |
+| 3-minute judging video | _TBD — add YouTube URL_ |
 
-**Deadline:** 8 October 2026 at 23:59 WIB
+Video source (Remotion compositions and scripts) lives in [`/video`](video).
+
+---
+
+## 🎯 Submission
+
+**Sectors Hackathon 2026 · Track 1: AI Agents & Assistants** — deadline 8 October 2026, 23:59 WIB.
+Repository: https://github.com/seppam/sectors-ai-advisor
 
 ---
 

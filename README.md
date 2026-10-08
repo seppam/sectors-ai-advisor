@@ -224,12 +224,12 @@ node scripts/qa-live.mjs            # live 10-flow QA + screen recording (needs 
 
 | Video | Link |
 |---|---|
-| 1-minute teaser | _TBD — add YouTube URL_ |
-| 3-minute judging video | _TBD — add YouTube URL_ |
+| 1-minute teaser | https://youtu.be/K4uEjemUpfo |
+| 3-minute judging video (demo + technical walkthrough) | https://youtu.be/bpj0dAYByU0 |
 
 ---|---|
-| 1-minute teaser | _TBD — add YouTube URL_ |
-| 3-minute judging video | _TBD — add YouTube URL_ |
+| 1-minute teaser | https://youtu.be/K4uEjemUpfo |
+| 3-minute judging video (demo + technical walkthrough) | https://youtu.be/bpj0dAYByU0 |
 
 Video source (Remotion compositions, narration script, VO generator) lives in [`/video`](video); rendered `.mp4`/`.mp3` files are not committed.
 

@@ -223,7 +223,11 @@ node scripts/qa-live.mjs            # live 10-flow QA + screen recording to qa-r
 ## 🎬 Demo Videos
 
 | Video | Link |
-|---
+|---|---|
+| 1-minute teaser | https://youtu.be/K4uEjemUpfo |
+| 3-minute judging video (demo + technical walkthrough) | https://youtu.be/bpj0dAYByU0 |
+
+---
 
 ## 🎯 Submission
 

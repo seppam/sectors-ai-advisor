@@ -5,7 +5,7 @@ import { useSettingsStore } from "@/lib/store";
 import { useChatStore } from "@/lib/store";
 import { useWatchlistStore } from "@/lib/store";
 import { t } from "@/lib/i18n";
-import { getAccountBalance } from "@/lib/sectorsApi";
+import { validateApiKey } from "@/lib/sectorsApi";
 import { Button, Input, Card, Toggle, Badge } from "@/components/ui";
 import { PageContainer } from "@/components/layout";
 import { cn } from "@/lib/utils";
@@ -66,17 +66,17 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [creditBalance, setCreditBalance] = useState<number | null>(null);
+  const [keyValid, setKeyValid] = useState<boolean | null>(null);
   const [checkingCredits, setCheckingCredits] = useState(false);
 
   async function checkCredits() {
     if (!sectorsApiKey) return;
     setCheckingCredits(true);
     try {
-      const balance = await getAccountBalance(sectorsApiKey);
-      setCreditBalance(balance);
+      const { ok } = await validateApiKey(sectorsApiKey);
+      setKeyValid(ok);
     } catch {
-      setCreditBalance(null);
+      setKeyValid(false);
     } finally {
       setCheckingCredits(false);
     }
@@ -237,8 +237,8 @@ export default function SettingsPage() {
                 <Button variant="ghost" size="sm" onClick={checkCredits} isLoading={checkingCredits}>
                   {strings.sectorsApiBalance}
                 </Button>
-                {creditBalance !== null && (
-                  <Badge variant="success">{creditBalance.toLocaleString()} credits</Badge>
+                {keyValid !== null && (
+                  <Badge variant={keyValid ? "success" : "danger"}>{keyValid ? (language === "id" ? "Key valid" : "Key valid") : (language === "id" ? "Key tidak valid" : "Key invalid")}</Badge>
                 )}
               </div>
             )}
@@ -256,7 +256,7 @@ export default function SettingsPage() {
 
           {/* Provider selector */}
           <div className="mb-4">
-            <label className="block font-label-caps font-medium text-on-surface-variant mb-2">{strings.llmProvider}</label>
+            <label className="block text-[0.875rem] font-semibold text-on-surface mb-2">{strings.llmProvider}</label>
             <div className="grid grid-cols-2 gap-2">
               {LLM_PROVIDERS.map((p) => (
                 <button

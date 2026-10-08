@@ -10,6 +10,7 @@ import {
   screenCompaniesCached,
   getCompanyReportCached,
   getTopMoversCached,
+  summarizeCompany,
 } from "@/lib/sectorsApi";
 import { ChatInput, WelcomeState, UsagePanel } from "@/components/chat";
 import GlossaryPanel from "@/components/GlossaryPanel";
@@ -20,11 +21,12 @@ import MessageContent from "@/components/chat/MessageContent";
 import HistoryDrawer from "@/components/chat/HistoryDrawer";
 import type { GlossaryTerm, SectorsDataRef } from "@/lib/types";
 
-// Inline type to avoid @typescript-eslint/no-explicit-any
-interface CompanyReportData {
-  summary?: unknown;
-  financials?: unknown;
-  data?: unknown;
+/** Credits are charged per section, so only request what the question needs. */
+function sectionsFor(query: string): string[] {
+  const q = query.toLowerCase();
+  const sections = ["overview", "valuation", "financials"];
+  if (/dividen|dividend|yield/.test(q)) sections.push("dividend");
+  return sections;
 }
 
 // Common IDX tickers so lowercase input ("bbca") is still recognised.
@@ -74,12 +76,11 @@ export default function ChatPage() {
       const potentialTickers = extractSymbols(query);
       if (potentialTickers.length === 1) {
         const ticker = potentialTickers[0];
-        const report = await getCompanyReportCached(sectorsApiKey, ticker, ["summary", "financials"]).catch(() => null);
-        if (report?.data && (report.data as CompanyReportData).summary) {
-          citations.push(report.refs);
-          const data = report.data as CompanyReportData;
+        const report = await getCompanyReportCached(sectorsApiKey, ticker, sectionsFor(query)).catch(() => null);
+        if (report?.data) {
+          citations.push({ ...report.refs, label: `${ticker} company report` });
           return {
-            data: JSON.stringify({ [ticker]: { summary: data.summary, financials: data.financials } }),
+            data: JSON.stringify({ [ticker]: summarizeCompany(report.data) }),
             citations,
             endpoints: [report.refs.endpoint],
           };
@@ -90,21 +91,21 @@ export default function ChatPage() {
         const symbols = extractSymbols(query);
         if (symbols.length >= 2) {
           const reports = await Promise.all(
-            symbols.map((s) => getCompanyReportCached(sectorsApiKey, s, ["summary", "financials"]).catch(() => null))
+            symbols.map((s) => getCompanyReportCached(sectorsApiKey, s, sectionsFor(query)).catch(() => null))
           );
           const valid = reports.filter((r): r is NonNullable<typeof reports[number]> => r !== null);
           if (valid.length > 0) {
             // Build a proper JSON object keyed by symbol (not string concatenation)
-            const compareData: Record<string, CompanyReportData> = {};
+            const compareData: Record<string, ReturnType<typeof summarizeCompany>> = {};
             for (let i = 0; i < symbols.length; i++) {
               const sym = symbols[i];
               const report = reports[i];
               if (report?.data) {
-                compareData[sym] = report.data as CompanyReportData;
+                compareData[sym] = summarizeCompany(report.data);
               }
             }
             const formatted = JSON.stringify(compareData);
-            citations.push(...valid.map((r) => r.refs));
+            citations.push(...valid.map((r, i) => ({ ...r.refs, label: `${symbols[i]} company report` })));
             return { data: formatted, citations, endpoints: valid.map((r) => r.refs.endpoint) };
           }
         }
@@ -113,7 +114,7 @@ export default function ChatPage() {
       if (q.includes("top gainer") || q.includes("top loser") || q.includes("penguat") || q.includes("pelemahan")) {
         const type = q.includes("loser") || q.includes("pelemahan") ? "top_losers" : "top_gainers";
         const res = await getTopMoversCached(sectorsApiKey, type, "1d", 10);
-        citations.push(res.refs);
+        citations.push({ ...res.refs, label: type === "top_losers" ? "top losers 1d" : "top gainers 1d" });
         return { data: JSON.stringify(res.data, null, 2), citations };
       }
 

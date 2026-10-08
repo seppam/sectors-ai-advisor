@@ -70,14 +70,16 @@ async function get<T>(
 // Public API Functions
 // ============================================================
 
-/** Check API credit balance */
-export async function getAccountBalance(apiKey: string): Promise<number> {
-  const res = await fetch(`${BASE_URL}/account/balance`, {
+/**
+ * Sectors v2 has no balance endpoint. Validate the key with one cheap call
+ * (1 daily row for BBCA) so Settings can tell the user whether it works.
+ */
+export async function validateApiKey(apiKey: string): Promise<{ ok: boolean; status: number }> {
+  const day = getLastTradingDay();
+  const res = await fetch(`${BASE_URL}/daily/BBCA/?start=${day}&end=${day}`, {
     headers: headers(apiKey),
   });
-  if (!res.ok) return 0;
-  const data = (await res.json()) as { balance?: number; credits?: number };
-  return data.balance ?? data.credits ?? 0;
+  return { ok: res.ok, status: res.status };
 }
 
 /** Natural language company screener */
@@ -107,7 +109,7 @@ export async function getCompanyReport(
 ) {
   const params: Record<string, string> = {};
   if (includeSections) params["sections"] = includeSections.join(",");
-  return get(`/company/${symbol}/`, apiKey, params);
+  return get(`/company/report/${symbol}/`, apiKey, params);
 }
 
 /**
@@ -132,10 +134,10 @@ export async function getStockDaily(
   end?: string,
   limit = 30
 ) {
-  return get(`/stock/daily/${symbol}/`, apiKey, {
+  void limit;
+  return get(`/daily/${symbol}/`, apiKey, {
     ...(start && { start }),
     ...(end && { end }),
-    limit: String(limit),
   });
 }
 
@@ -144,21 +146,36 @@ export async function getQuarterlyFinancials(
   apiKey: string,
   symbol: string
 ) {
-  return get(`/report/quarterly/${symbol}/`, apiKey, {});
+  return get(`/report/quarterly-financials/${symbol}/`, apiKey, {});
 }
 
-/** Top movers (gainers / losers) */
+/** A mover row normalised for the UI / LLM (change_percent is in %, not a fraction). */
+export interface MoverRow {
+  symbol: string;
+  name: string;
+  last_close: number;
+  change_percent: number;
+  date?: string;
+}
+
+/** Top movers (gainers / losers). Costs 1 credit per classification x period. */
 export async function getTopMovers(
   apiKey: string,
   type: "top_gainers" | "top_losers" = "top_gainers",
   period: "1d" | "7d" | "14d" | "30d" | "365d" = "1d",
   limit = 10
 ) {
-  return get("/ranking/top-changes/", apiKey, {
-    type,
-    period,
-    limit: String(limit),
-  });
+  const res = await get<Record<string, Record<string, Array<{
+    symbol: string; name: string; price_change: number; last_close_price: number; latest_close_date?: string;
+  }>>>>("/companies/top-changes/", apiKey, { classifications: type, periods: period });
+  const rows = (res.data[type]?.[period] ?? []).slice(0, limit).map<MoverRow>((r) => ({
+    symbol: r.symbol.replace(".JK", ""),
+    name: r.name,
+    last_close: r.last_close_price,
+    change_percent: Math.round(r.price_change * 10000) / 100,
+    date: r.latest_close_date,
+  }));
+  return { data: { results: rows }, refs: res.refs };
 }
 
 /**
@@ -217,7 +234,7 @@ export async function getForeignFlow(
   date: string, // YYYY-MM-DD
   limit = 10
 ) {
-  return get("/broker/foreign-flow/", apiKey, { date, limit: String(limit) });
+  return get("/foreign-flow/", apiKey, { date, limit: String(limit) });
 }
 
 /**
@@ -235,7 +252,7 @@ export async function getForeignFlowCached(
 
 /** All sectors / subsectors taxonomy */
 export async function getSubsectors(apiKey: string) {
-  return get("/helper-list/subsectors/", apiKey, {});
+  return get("/subsectors/", apiKey, {});
 }
 
 /** Sector report */
@@ -244,6 +261,71 @@ export async function getSectorReport(
   subSectorSlug: string
 ) {
   return get(`/report/sector-report/${subSectorSlug}/`, apiKey, {});
+}
+
+// ============================================================
+// Compact company summary (token-optimised)
+// ============================================================
+
+interface RawReport {
+  symbol?: string;
+  company_name?: string;
+  overview?: {
+    sector?: string; sub_sector?: string; market_cap?: number; last_close_price?: number;
+    latest_close_date?: string; daily_close_change?: number;
+    all_time_price?: Record<string, Record<string, number>>;
+  };
+  valuation?: {
+    forward_pe?: number; intrinsic_value?: number;
+    historical_valuation?: Array<{ year?: number; pb?: number; pe?: number; pb_peer_avg?: number; pe_peer_avg?: number }>;
+  };
+  financials?: {
+    eps?: number;
+    historical_eps?: Record<string, { eps?: number; eps_growth?: number }>;
+    historical_financial_ratio?: Array<{
+      year?: number;
+      leverage?: { debt_to_equity_ratio?: number };
+      profitability?: { roe?: number; roa?: number; net_profit_margin?: number };
+    }>;
+    yoy_ttm_earnings_growth?: number; yoy_ttm_revenue_growth?: number;
+  };
+  dividend?: unknown;
+}
+
+const round = (n: number | undefined, d = 2) =>
+  typeof n === "number" && !Number.isNaN(n) ? Math.round(n * 10 ** d) / 10 ** d : undefined;
+
+/** Collapse the (very large) v2 company report into the few ratios the advisor explains. */
+export function summarizeCompany(report: unknown) {
+  const r = report as RawReport;
+  const val = r.valuation?.historical_valuation?.at(-1);
+  const ratio = r.financials?.historical_financial_ratio?.at(-1);
+  const hi52 = Object.values(r.overview?.all_time_price?.["52_w_high"] ?? {})[0];
+  const lo52 = Object.values(r.overview?.all_time_price?.["52_w_low"] ?? {})[0];
+  return {
+    symbol: r.symbol?.replace(".JK", ""),
+    company_name: r.company_name,
+    sector: r.overview?.sector,
+    sub_sector: r.overview?.sub_sector,
+    last_close: r.overview?.last_close_price ?? undefined,
+    last_close_date: r.overview?.latest_close_date,
+    daily_change_pct: round((r.overview?.daily_close_change ?? NaN) * 100),
+    market_cap_idr: r.overview?.market_cap,
+    high_52w: hi52, low_52w: lo52,
+    forward_pe: round(r.valuation?.forward_pe),
+    pe_latest_year: round(val?.pe), pe_peer_avg: round(val?.pe_peer_avg),
+    pbv_latest_year: round(val?.pb), pbv_peer_avg: round(val?.pb_peer_avg),
+    intrinsic_value: round(r.valuation?.intrinsic_value, 0),
+    eps: round(r.financials?.eps),
+    roe_pct: round((ratio?.profitability?.roe ?? NaN) * 100),
+    roa_pct: round((ratio?.profitability?.roa ?? NaN) * 100),
+    net_margin_pct: round((ratio?.profitability?.net_profit_margin ?? NaN) * 100),
+    der: round(ratio?.leverage?.debt_to_equity_ratio),
+    ratio_year: ratio?.year,
+    earnings_growth_ttm_pct: round((r.financials?.yoy_ttm_earnings_growth ?? NaN) * 100),
+    revenue_growth_ttm_pct: round((r.financials?.yoy_ttm_revenue_growth ?? NaN) * 100),
+    ...(r.dividend ? { dividend: r.dividend } : {}),
+  };
 }
 
 // ============================================================

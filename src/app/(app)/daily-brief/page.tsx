@@ -19,8 +19,12 @@ interface SectorsListItem {
   change_percent?: number;
   changePercent?: number;
 }
-interface ForeignFlowData { net_buy_foreign?: number; value_bought?: number; value_sold?: number; net_buy?: number; net_sell?: number }
-interface NewsArticle { title?: string; sector?: string; published_at?: string; source?: string; date?: string }
+interface ForeignFlowData { top_inflows?: string[]; net_buy_foreign?: number; value_bought?: number; value_sold?: number; net_buy?: number; net_sell?: number }
+interface NewsArticle { timestamp?: string; title?: string; sector?: string; published_at?: string; source?: string; date?: string }
+
+function hostOf(url?: string): string {
+  try { return new URL(url ?? "").hostname.replace(/^www\./, ""); } catch { return url ?? ""; }
+}
 
 function fmtMoney(amount: number): string {
   if (Math.abs(amount) >= 1e12) return `IDR ${(amount / 1e12).toFixed(2)}T`;
@@ -72,13 +76,20 @@ export default function DailyBriefPage() {
       const [gainerRes, loserRes, ffRes, newsRes] = await Promise.all([
         getTopMoversCached(sectorsApiKey, "top_gainers", "1d", 5).catch(() => null),
         getTopMoversCached(sectorsApiKey, "top_losers", "1d", 5).catch(() => null),
-        getForeignFlowCached(sectorsApiKey, today, 5).catch(() => null),
+        getForeignFlowCached(sectorsApiKey, today, 20).catch(() => null),
         getNews(sectorsApiKey, { limit: 5 }).catch(() => null),
       ]);
 
       const gainersData = (gainerRes?.data as { results?: SectorsListItem[] })?.results ?? [];
       const losersData = (loserRes?.data as { results?: SectorsListItem[] })?.results ?? [];
-      const ffData = ffRes?.data as ForeignFlowData ?? {};
+      // /foreign-flow/ returns one row per ticker; aggregate into market totals.
+      const ffRows = (ffRes?.data as { results?: Array<{ symbol: string; net_foreign_inflow: number; foreign_buy_idr: number; foreign_sell_idr: number }> })?.results ?? [];
+      const ffData: ForeignFlowData = {
+        net_buy: ffRows.filter((r) => r.net_foreign_inflow > 0).reduce((a, r) => a + r.net_foreign_inflow, 0),
+        net_sell: Math.abs(ffRows.filter((r) => r.net_foreign_inflow < 0).reduce((a, r) => a + r.net_foreign_inflow, 0)),
+        net_buy_foreign: ffRows.reduce((a, r) => a + (r.net_foreign_inflow ?? 0), 0),
+        top_inflows: ffRows.filter((r) => r.net_foreign_inflow > 0).slice(0, 5).map((r) => `${r.symbol.replace(".JK", "")}: ${r.net_foreign_inflow}`),
+      };
       const newsData = (newsRes?.data as { articles?: NewsArticle[]; results?: NewsArticle[] })?.articles ?? (newsRes?.data as { articles?: NewsArticle[]; results?: NewsArticle[] })?.results ?? [];
 
       setGainers(gainerRes ? gainersData : []);
@@ -97,7 +108,7 @@ FOREIGN FLOW:
 ${JSON.stringify(ffData, null, 2)}
 
 RECENT NEWS:
-${JSON.stringify(newsData.slice(0, 5), null, 2)}
+${JSON.stringify(newsData.slice(0, 5).map((n) => ({ title: n.title, sector: n.sector, date: n.timestamp?.slice(0, 10) })), null, 2)}
 `.trim();
 
       const llmResponse = await callLLM({
@@ -252,7 +263,7 @@ ${JSON.stringify(newsData.slice(0, 5), null, 2)}
                   {news.slice(0, 5).map((n, i) => (
                     <div key={i} className="px-3 py-2.5 border-b border-outline-variant last:border-0">
                       <p className="font-body-sm text-on-surface-variant line-clamp-2 leading-snug">{n.title}</p>
-                      <p className="font-label-caps text-on-surface-variant mt-0.5">{n.source} · {n.date ?? n.published_at ?? ""}</p>
+                      <p className="font-label-caps text-on-surface-variant mt-0.5">{hostOf(n.source)} · {(n.timestamp ?? n.date ?? n.published_at ?? "").slice(0, 10)}</p>
                     </div>
                   ))}
                 </div>

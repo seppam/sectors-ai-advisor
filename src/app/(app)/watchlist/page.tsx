@@ -5,7 +5,7 @@ import { useSettingsStore } from "@/lib/store";
 import { useWatchlistStore } from "@/lib/store";
 import type { CompanyData } from "@/lib/types";
 import { t } from "@/lib/i18n";
-import { getCompanyReport } from "@/lib/sectorsApi";
+import { getCompanyReport, summarizeCompany } from "@/lib/sectorsApi";
 import { Button, Input, Card, StatCard, EmptyState } from "@/components/ui";
 import { PageContainer } from "@/components/layout";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,22 @@ function changeColor(pct: number) {
   if (pct > 0) return "text-success";
   if (pct < 0) return "text-danger";
   return "text-on-surface-variant";
+}
+
+/** Map the compact v2 summary onto the shape the card UI renders (fractions, as before). */
+function toCompanyData(report: unknown): CompanyData {
+  const c = summarizeCompany(report);
+  return {
+    company_name: c.company_name,
+    summary: {
+      last_close: c.last_close,
+      daily_close_change: c.daily_change_pct !== undefined ? c.daily_change_pct / 100 : undefined,
+      forward_pe: c.forward_pe,
+      pb_mrq: c.pbv_latest_year,
+      roe_ttm: c.roe_pct !== undefined ? c.roe_pct / 100 : undefined,
+      der_mrq: c.der,
+    },
+  };
 }
 
 export default function WatchlistPage() {
@@ -33,9 +49,9 @@ export default function WatchlistPage() {
       items.forEach((item) => {
         if (!stockData[item.symbol]) {
           setLoading((prev) => ({ ...prev, [item.symbol]: true }));
-          getCompanyReport(sectorsApiKey, item.symbol, ["summary"])
+          getCompanyReport(sectorsApiKey, item.symbol, ["overview", "valuation", "financials"])
             .then((res) => {
-              if (res?.data) setStockData((prev) => ({ ...prev, [item.symbol]: res.data as CompanyData }));
+              if (res?.data) setStockData((prev) => ({ ...prev, [item.symbol]: toCompanyData(res.data) }));
             })
             .catch(() => null)
             .finally(() => setLoading((prev) => ({ ...prev, [item.symbol]: false })));
@@ -61,10 +77,10 @@ export default function WatchlistPage() {
     if (sectorsApiKey) {
       setLoading((prev) => ({ ...prev, [symbol]: true }));
       try {
-        const res = await getCompanyReport(sectorsApiKey, symbol, ["summary"]).catch(() => null);
+        const res = await getCompanyReport(sectorsApiKey, symbol, ["overview", "valuation", "financials"]).catch(() => null);
         // P1-5: Only add to watchlist if API lookup actually succeeded with data
-        if (res?.data && (res.data as { summary?: unknown }).summary) {
-          setStockData((prev) => ({ ...prev, [symbol]: res.data as CompanyData }));
+        if (res?.data && (res.data as { overview?: unknown }).overview) {
+          setStockData((prev) => ({ ...prev, [symbol]: toCompanyData(res.data) }));
           addItem({ symbol, addedAt: Date.now() });
         } else {
           setAddError(

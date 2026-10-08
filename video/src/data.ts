@@ -6,7 +6,14 @@ export const NARRATION = narration as { judging: Record<string, string>; teaser:
 export const AUDIO_SECONDS = meta as Record<string, number>;
 
 export const audioFrames = (id: string) => Math.ceil(AUDIO_SECONDS[id] * FPS);
-export const textOf = (id: string) => NARRATION.judging[id] ?? NARRATION.teaser[id];
+/** On-screen subtitle text: the narration uses TTS-friendly spellings, subtitles use the normal ones. */
+export const textOf = (id: string) =>
+  (NARRATION.judging[id] ?? NARRATION.teaser[id])
+    .replace(/I-D-X/g, "IDX")
+    .replace(/Track satu/g, "Track 1")
+    .replace(/dua ribu dua puluh enam/g, "2026")
+    .replace(/\bBCA\b/g, "BBCA")
+    .replace(/\bBRI\b/g, "BBRI");
 
 /** A slice of a recorded screen capture. `rate` > 1 speeds up waiting time (LLM latency). */
 export type Seg = { src: "demo/main.mp4" | "demo/watchlist.mp4"; from: number; to: number; rate?: number };

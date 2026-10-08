@@ -2,7 +2,9 @@
 
 **Sectors Hackathon 2026 · Track 1: AI Agents & Assistants**
 
-AI-powered investment assistant for Indonesian retail investors. Translates complex IDX market data into plain-language insights with in-line glossary chips, daily market briefs, and watchlist tracking.
+**Team:** cobacobaberhadiah · **Member:** Muhamad Septian Pamungkas
+
+AI-powered investment assistant for Indonesian retail investors. Translates complex IDX market data from the **Sectors API v2** into plain-language insights with in-line glossary chips, source citations on every answer, daily market briefs, watchlist tracking and conversation history.
 
 ---
 
@@ -29,17 +31,17 @@ cp .env.local.example .env.local
 Edit `.env.local` with your keys:
 
 ```env
-# Sectors API Key (get yours at https://sectors.app — requires Insider plan)
+# Sectors API Key (optional server fallback; get yours at https://sectors.app)
 SECTORS_API_KEY=your_sectors_api_key_here
 
-# LLM Provider Keys (at least one required)
+# LLM Provider Keys (optional — only for the server-side /api/chat proxy; the UI uses the key from Settings)
 ANTHROPIC_API_KEY=your_anthropic_key_here
 OPENAI_API_KEY=your_openai_key_here
 DEEPSEEK_API_KEY=your_deepseek_key_here
 OPENROUTER_API_KEY=your_openrouter_key_here
 ```
 
-> 💡 **How keys are used:** the app's default flow uses the keys you enter in **Settings** (stored only in your browser's localStorage and sent to your LLM provider directly and to Sectors through the app's stateless `/api/sectors` proxy — Sectors does not allow cross-origin browser calls; nothing is stored server-side). The `.env.local` keys power the optional server proxy routes (`/api/chat`, `/api/sectors`, `/api/brief`) for deployments where you prefer to keep keys server-side.
+> 💡 **How keys are used:** the app's default flow uses the keys you enter in **Settings** (stored only in your browser's localStorage). The LLM key goes straight from the browser to your provider; Sectors requests go through the app's stateless `/api/sectors` proxy because `api.sectors.app` does not allow cross-origin browser calls. Nothing is stored server-side. `SECTORS_API_KEY` in `.env.local` is only a fallback for the proxy when no key is sent, and the `QA_*` variables are used by `scripts/qa-live.mjs` only.
 
 ### 3. Run
 

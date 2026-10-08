@@ -11,6 +11,7 @@ Brand: background `#051424` · accent teal `#46f1c5` · font **Inter** (Bold/Ext
 | Title (line 2, teal) | `Advisor` |
 | Subtitle | `Data saham IDX, dijelaskan sederhana` |
 | Optional chip row (small) | `Data live Sectors API` · `Istilah dijelaskan` · `Tanpa eksekusi transaksi` |
+| **Team line (wajib)** | `TIM  cobacobaberhadiah  |  Muhamad Septian Pamungkas` |
 | Footer (optional, small) | `github.com/seppam/sectors-ai-advisor` |
 
 **Images to upload into the template**

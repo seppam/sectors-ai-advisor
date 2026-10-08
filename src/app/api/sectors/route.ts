@@ -18,6 +18,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No Sectors API key configured" }, { status: 401 });
     }
 
+    if (typeof endpoint !== "string" || !endpoint.startsWith("/") || endpoint.includes("..")) {
+      return NextResponse.json({ error: "Invalid endpoint" }, { status: 400 });
+    }
+
     // Build URL
     const baseUrl = "https://api.sectors.app/v2";
     const url = new URL(`${baseUrl}${endpoint}`);
@@ -33,16 +37,12 @@ export async function POST(req: NextRequest) {
       signal: AbortSignal.timeout(30000),
     });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      return NextResponse.json(
-        { error: data.error || "Sectors API error", status: response.status },
-        { status: response.status }
-      );
-    }
-
-    return NextResponse.json(data);
+    const text = await response.text();
+    // Pass the upstream body through untouched (error bodies included) so the client can read the real message.
+    return new NextResponse(text, {
+      status: response.status,
+      headers: { "Content-Type": response.headers.get("content-type") ?? "application/json" },
+    });
   } catch (err: unknown) {
     return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }

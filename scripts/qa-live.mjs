@@ -51,6 +51,9 @@ page.on("request", (r) => {
   if (/openrouter\.ai|api\.anthropic\.com|api\.openai\.com|api\.deepseek\.com/.test(u)) calls.llm++;
   if (/api\.sectors\.app/.test(u)) calls.sectors++;
 });
+const badResponses = [];
+page.on("response", (r) => { if (/api\.sectors\.app/.test(r.url()) && r.status() >= 400) badResponses.push(`${r.status()} ${r.url().replace(/\?.*/, "")}`); });
+page.on("requestfailed", (r) => { if (/api\.sectors\.app/.test(r.url())) badResponses.push(`FAILED ${r.failure()?.errorText} ${r.url().replace(/\?.*/, "")}`); });
 const consoleErrors = [];
 page.on("console", (m) => { if (m.type() === "error") consoleErrors.push(m.text().slice(0, 160)); });
 
@@ -221,6 +224,6 @@ const video = fs.readdirSync(vidDir).filter((f) => f.endsWith(".webm")).map((f) 
 await browser.close();
 
 fs.writeFileSync(path.join(root, "video/qa-timeline.json"), JSON.stringify({ video, duration: tEnd, flows: timeline }, null, 2));
-fs.writeFileSync(path.join(root, "docs/qa-results.json"), JSON.stringify({ date: new Date().toISOString(), results, totals: calls, consoleErrors: [...new Set(consoleErrors)] }, null, 2));
+fs.writeFileSync(path.join(root, "docs/qa-results.json"), JSON.stringify({ date: new Date().toISOString(), results, totals: calls, consoleErrors: [...new Set(consoleErrors)], badResponses }, null, 2));
 console.table(results.map((r) => ({ id: r.id, name: r.name, status: r.status, llm: r.llmCalls, sectors: r.sectorsCalls, note: r.note.slice(0, 70) })));
 console.log("totals", calls, "video", video);

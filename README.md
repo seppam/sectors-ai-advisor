@@ -39,7 +39,7 @@ DEEPSEEK_API_KEY=your_deepseek_key_here
 OPENROUTER_API_KEY=your_openrouter_key_here
 ```
 
-> 💡 **How keys are used:** the app's default flow uses the keys you enter in **Settings** (stored only in your browser's localStorage and sent directly to Sectors / your LLM provider — there is no app backend storing them). The `.env.local` keys power the optional server proxy routes (`/api/chat`, `/api/sectors`, `/api/brief`) for deployments where you prefer to keep keys server-side.
+> 💡 **How keys are used:** the app's default flow uses the keys you enter in **Settings** (stored only in your browser's localStorage and sent to your LLM provider directly and to Sectors through the app's stateless `/api/sectors` proxy — Sectors does not allow cross-origin browser calls; nothing is stored server-side). The `.env.local` keys power the optional server proxy routes (`/api/chat`, `/api/sectors`, `/api/brief`) for deployments where you prefer to keep keys server-side.
 
 ### 3. Run
 

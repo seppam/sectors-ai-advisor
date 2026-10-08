@@ -39,17 +39,50 @@ function headers(apiKey: string) {
   };
 }
 
+/** Retry transient failures (network errors, 429, 5xx) so a single hiccup doesn't surface as "cannot reach Sectors". */
+async function fetchWithRetry(url: string, init: RequestInit, retries = 2): Promise<Response> {
+  let lastErr: unknown;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(url, init);
+      if (res.status !== 429 && res.status < 500) return res;
+      if (attempt === retries) return res;
+    } catch (err) {
+      lastErr = err;
+      if (attempt === retries) throw err;
+    }
+    await new Promise((r) => setTimeout(r, 1200 * (attempt + 1)));
+  }
+  throw lastErr;
+}
+
+/**
+ * In the browser, requests go through our own /api/sectors proxy: api.sectors.app does not send
+ * CORS headers for arbitrary origins (works on localhost:3000 only, breaks on any deployed origin).
+ * On the server we call Sectors directly.
+ */
+function sectorsFetch(path: string, apiKey: string, params: Record<string, string>): Promise<Response> {
+  if (typeof window !== "undefined") {
+    return fetchWithRetry("/api/sectors", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-sectors-api-key": apiKey },
+      body: JSON.stringify({ endpoint: path, params }),
+    });
+  }
+  const url = new URL(`${BASE_URL}${path}`);
+  Object.entries(params).forEach(([k, v]) => {
+    if (v) url.searchParams.set(k, v);
+  });
+  return fetchWithRetry(url.toString(), { headers: headers(apiKey) });
+}
+
 async function get<T>(
   path: string,
   apiKey: string,
   params: Record<string, string> = {}
 ): Promise<{ data: T; refs: SectorsDataRef }> {
-  const url = new URL(`${BASE_URL}${path}`);
-  Object.entries(params).forEach(([k, v]) => {
-    if (v) url.searchParams.set(k, v);
-  });
-
-  const res = await fetch(url.toString(), { headers: headers(apiKey) });
+  const clean = Object.fromEntries(Object.entries(params).filter(([, v]) => v));
+  const res = await sectorsFetch(path, apiKey, clean);
   if (!res.ok) {
     const err = await res.text();
     throw new Error(`Sectors API error ${res.status}: ${err}`);
@@ -60,8 +93,8 @@ async function get<T>(
     data,
     refs: {
       endpoint: path,
-      params,
-      label: path.replace("/v2/", "").replace(/\//g, " / ").replace(/-/g, " "),
+      params: clean,
+      label: path.replace(/^\/|\/$/g, "").replace(/\//g, " / ").replace(/-/g, " "),
     } as SectorsDataRef,
   };
 }
@@ -76,9 +109,7 @@ async function get<T>(
  */
 export async function validateApiKey(apiKey: string): Promise<{ ok: boolean; status: number }> {
   const day = getLastTradingDay();
-  const res = await fetch(`${BASE_URL}/daily/BBCA/?start=${day}&end=${day}`, {
-    headers: headers(apiKey),
-  });
+  const res = await sectorsFetch("/daily/BBCA/", apiKey, { start: day, end: day });
   return { ok: res.ok, status: res.status };
 }
 

@@ -220,10 +220,14 @@ node scripts/qa-live.mjs            # live 10-flow QA + screen recording (needs 
 
 ---
 
-## 🎬 Demo Video
+## 🎬 Demo Videos
 
 | Video | Link |
 |---|---|
+| 1-minute teaser | _TBD — add YouTube URL_ |
+| 3-minute judging video | _TBD — add YouTube URL_ |
+
+---|---|
 | 1-minute teaser | _TBD — add YouTube URL_ |
 | 3-minute judging video | _TBD — add YouTube URL_ |
 

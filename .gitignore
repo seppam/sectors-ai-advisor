@@ -41,18 +41,13 @@ tsconfig.tsbuildinfo
 *.png
 !docs/**/*.png
 !public/*.png
-video/raw/
-video/out/
 out/
 *.mp4
 *.webm
 *.mp3
 !docs/**/*.png
-docs/qa-results.json
 
-# Generated media (regenerate with video/scripts/gen-vo.sh and scripts/qa-live.mjs)
-video/public/audio/
-video/public/demo/
-video/public/shots/
-video/raw/
-*.raw
+# QA screen recordings / results (scripts/qa-live.mjs)
+qa-recordings/
+*.mp4
+*.webm

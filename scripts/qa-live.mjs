@@ -1,6 +1,6 @@
 // Live QA + demo footage recorder.
 // Reads QA_* vars from .env.local, seeds Settings in the browser, drives the 10 flows at 390x844,
-// saves screenshots to docs/screenshots/qa/, a Playwright video and a timeline (video/qa-timeline.json).
+// saves screenshots to docs/screenshots/qa/ and a Playwright screen recording + timeline to qa-recordings/ (gitignored).
 // Keys are only seeded into browser localStorage; they are never printed or written to disk by this script.
 import { chromium } from "playwright";
 import fs from "node:fs";
@@ -13,7 +13,7 @@ const env = Object.fromEntries(
 );
 const BASE = process.env.QA_BASE_URL ?? "http://localhost:3000";
 const shots = path.join(root, "docs/screenshots/qa");
-const vidDir = path.join(root, "video/raw");
+const vidDir = path.join(root, "qa-recordings");
 fs.mkdirSync(shots, { recursive: true });
 fs.mkdirSync(vidDir, { recursive: true });
 
@@ -275,7 +275,7 @@ await ctx.close(); // flushes video
 const video = fs.readdirSync(vidDir).filter((f) => f.endsWith(".webm")).map((f) => ({ f, t: fs.statSync(path.join(vidDir, f)).mtimeMs })).sort((a, b) => b.t - a.t)[0]?.f;
 await browser.close();
 
-fs.writeFileSync(path.join(root, "video/qa-timeline.json"), JSON.stringify({ video, duration: tEnd, flows: timeline, marks }, null, 2));
-fs.writeFileSync(path.join(root, "docs/qa-results.json"), JSON.stringify({ date: new Date().toISOString(), results, totals: calls, consoleErrors: [...new Set(consoleErrors)], badResponses }, null, 2));
+fs.writeFileSync(path.join(vidDir, "timeline.json"), JSON.stringify({ video, duration: tEnd, flows: timeline, marks }, null, 2));
+fs.writeFileSync(path.join(vidDir, "results.json"), JSON.stringify({ date: new Date().toISOString(), results, totals: calls, consoleErrors: [...new Set(consoleErrors)], badResponses }, null, 2));
 console.table(results.map((r) => ({ id: r.id, name: r.name, status: r.status, llm: r.llmCalls, sectors: r.sectorsCalls, note: r.note.slice(0, 70) })));
 console.log("totals", calls, "video", video);

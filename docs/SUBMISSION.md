@@ -2,6 +2,8 @@
 
 | | |
 |---|---|
+| **Team** | cobacobaberhadiah |
+| **Member** | Muhamad Septian Pamungkas |
 | **Project** | Sectors AI Advisor |
 | **Track** | 1 · AI Agents & Assistants |
 | **Repo** | https://github.com/seppam/sectors-ai-advisor |
@@ -101,6 +103,8 @@ Project Links:
 GitHub: https://github.com/seppam/sectors-ai-advisor
 Judging Demo Video: <JUDGING_VIDEO_URL>
 Teaser: <TEASER_URL>
+
+Tim: cobacobaberhadiah (Muhamad Septian Pamungkas)
 
 Terima kasih @Sectors atas hackathon-nya! #SectorsHackathon2026 #AIAgents #IDX #FinTechIndonesia
 ```

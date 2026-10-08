@@ -74,32 +74,80 @@ export const useSettingsStore = create<SettingsState>()(
 // Chat Store
 // ============================================================
 
-interface ChatState {
+export interface Conversation {
+  id: string;
+  title: string;
   messages: ChatMessage[];
+  createdAt: number;
+  updatedAt: number;
+}
+
+interface ChatState {
+  /** Messages of the active conversation */
+  messages: ChatMessage[];
+  conversations: Conversation[];
+  activeId: string | null;
   isLoading: boolean;
   // Actions
   addMessage: (msg: Omit<ChatMessage, "id" | "timestamp">) => void;
   updateLastMessage: (content: string, citations?: ChatMessage['citations']) => void;
   clearMessages: () => void;
+  newConversation: () => void;
+  switchConversation: (id: string) => void;
+  deleteConversation: (id: string) => void;
+}
+
+/** Auto-title: first user message, trimmed to a short single line. */
+export function makeTitle(text: string): string {
+  const clean = text.replace(/\s+/g, " ").trim();
+  return clean.length > 42 ? clean.slice(0, 40).trimEnd() + "…" : clean || "Obrolan baru";
 }
 
 export const useChatStore = create<ChatState>()(
   persist(
     (set) => ({
       messages: [],
+      conversations: [],
+      activeId: null,
       isLoading: false,
 
       addMessage: (msg) =>
-        set((state) => ({
-          messages: [
-            ...state.messages,
-            {
-              ...msg,
-              id: generateId(),
-              timestamp: Date.now(),
-            },
-          ],
-        })),
+        set((state) => {
+          const full: ChatMessage = { ...msg, id: generateId(), timestamp: Date.now() };
+          const messages = [...state.messages, full];
+          const now = Date.now();
+          let activeId = state.activeId;
+          let conversations = state.conversations;
+          if (!activeId || !conversations.some((c) => c.id === activeId)) {
+            activeId = generateId();
+            const firstUser = messages.find((m) => m.role === "user");
+            conversations = [
+              {
+                id: activeId,
+                title: makeTitle(firstUser?.content ?? ""),
+                messages,
+                createdAt: now,
+                updatedAt: now,
+              },
+              ...conversations,
+            ];
+          } else {
+            conversations = conversations.map((c) =>
+              c.id === activeId
+                ? {
+                    ...c,
+                    messages,
+                    updatedAt: now,
+                    title:
+                      c.messages.length === 0 && msg.role === "user"
+                        ? makeTitle(msg.content)
+                        : c.title,
+                  }
+                : c
+            );
+          }
+          return { messages, activeId, conversations };
+        }),
 
       updateLastMessage: (content, citations) =>
         set((state) => {
@@ -111,10 +159,31 @@ export const useChatStore = create<ChatState>()(
               ...(citations !== undefined ? { citations } : {}),
             };
           }
-          return { messages: msgs };
+          return {
+            messages: msgs,
+            conversations: state.conversations.map((c) =>
+              c.id === state.activeId ? { ...c, messages: msgs } : c
+            ),
+          };
         }),
 
-      clearMessages: () => set({ messages: [] }),
+      clearMessages: () => set({ messages: [], conversations: [], activeId: null }),
+
+      newConversation: () => set({ messages: [], activeId: null }),
+
+      switchConversation: (id) =>
+        set((state) => {
+          const c = state.conversations.find((x) => x.id === id);
+          return c ? { activeId: id, messages: c.messages } : state;
+        }),
+
+      deleteConversation: (id) =>
+        set((state) => {
+          const conversations = state.conversations.filter((c) => c.id !== id);
+          return state.activeId === id
+            ? { conversations, activeId: null, messages: [] }
+            : { conversations };
+        }),
     }),
     { name: "sectors-advisor-chat" }
   )

@@ -6,8 +6,7 @@ import { useSettingsStore } from "@/lib/store";
 import { t } from "@/lib/i18n";
 import type { Language } from "@/lib/types";
 
-const LOGO_URL =
-  "https://lh3.googleusercontent.com/aida/AEtjO1XMcbmErg4ga-uXn8KSetpPBHOOxH_uEbjJWVYtbfUYdGWy-O948w9qp8hAX6_KIT2bRQKgvlbIzyVg89YdvssTjflccLyeUuNxoA3EWSrAiK5IaIiGZSbYZa6mtjXKo4XH5NsqjFUU9iBLtUar12T7nS4gjoJER5IlYo5FfloBFcnkSk1QDQM-8Zd0g6Rdb33UixW_-KQXb2efSFNyuCh2ftW4hKamJt1H99LktJpg";
+const LOGO_URL = "/logo.svg";
 
 export default function TopBar() {
   const language = useSettingsStore((s) => s.settings.language);
@@ -19,13 +18,15 @@ export default function TopBar() {
   }
 
   return (
-    <header className="fixed top-0 inset-x-0 z-50 glass-bar pt-safe shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
+    <header className="relative shrink-0 z-40 glass-bar pt-safe border-b border-outline-variant/40">
       <div className="h-14 px-margin flex items-center justify-between">
         {/* Left: Logo + App name + subtitle */}
         <Link href="/" className="flex items-center gap-space-sm group">
           <img
             alt="Sectors AI Logo"
-            className="h-8 w-auto object-contain"
+            width={32}
+            height={32}
+            className="h-8 w-8 object-contain rounded-lg"
             src={LOGO_URL}
           />
           <div className="flex flex-col">

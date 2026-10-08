@@ -132,7 +132,7 @@ export default function ChatInput({
   const canSend = value.trim().length > 0 && !disabled && !isLoading;
 
   return (
-    <div className="flex flex-col gap-space-sm">
+    <div className="shrink-0 flex flex-col gap-2 pb-3 pt-1">
       {/* Quick Prompt Chips */}
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 px-margin">
         {chips.map((chip) => (
@@ -164,7 +164,7 @@ export default function ChatInput({
       </div>
 
       {/* Input Bar */}
-      <div className="w-full flex items-center gap-2 p-1.5 pl-3 rounded-full bg-surface-container-high shadow-lg mx-margin">
+      <div className="flex items-center gap-2 p-1.5 pl-3 rounded-full bg-surface-container-high shadow-lg mx-4 border border-outline-variant/40">
         <span className="material-symbols-outlined text-on-surface-variant text-[20px] shrink-0">search</span>
         <input
           ref={inputRef}

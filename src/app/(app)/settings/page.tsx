@@ -205,15 +205,15 @@ export default function SettingsPage() {
         {/* Sectors API */}
         <Card padding="lg">
           <div className="flex items-center gap-2.5 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center">
               <IconChart />
             </div>
-            <h3 className="font-title-sm font-semibold text-on-surface">{strings.sectorsApiSection}</h3>
+            <h3 className="text-[1.125rem] font-bold text-on-surface">{strings.sectorsApiSection}</h3>
           </div>
 
           <div className="space-y-3">
             <div>
-              <label className="block font-label-caps font-medium text-on-surface-variant mb-1.5">{strings.sectorsApiKey}</label>
+              <label className="block text-[0.875rem] font-semibold text-on-surface mb-1.5">{strings.sectorsApiKey}</label>
               <Input
                 type="password"
                 value={sectorsApiKey}
@@ -248,10 +248,10 @@ export default function SettingsPage() {
         {/* LLM Provider */}
         <Card padding="lg">
           <div className="flex items-center gap-2.5 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center">
               <IconBot />
             </div>
-            <h3 className="font-title-sm font-semibold text-on-surface">{strings.llmSection}</h3>
+            <h3 className="text-[1.125rem] font-bold text-on-surface">{strings.llmSection}</h3>
           </div>
 
           {/* Provider selector */}
@@ -286,7 +286,7 @@ export default function SettingsPage() {
 
           {/* API Key */}
           <div className="mb-2">
-            <label className="block font-label-caps font-medium text-on-surface-variant mb-1.5">{strings.llmApiKey}</label>
+            <label className="block text-[0.875rem] font-semibold text-on-surface mb-1.5">{strings.llmApiKey}</label>
             <Input
               type="password"
               value={llmApiKey}
@@ -312,7 +312,7 @@ export default function SettingsPage() {
           {llmProvider === "custom" && (
             <div className="space-y-3 border border-outline-variant rounded-lg p-4 bg-surface/50 mt-3">
               <div>
-                <label className="block font-label-caps font-medium text-on-surface-variant mb-1.5">Base URL</label>
+                <label className="block text-[0.875rem] font-semibold text-on-surface mb-1.5">Base URL</label>
                 <input
                   type="text"
                   value={customBaseUrl}
@@ -323,7 +323,7 @@ export default function SettingsPage() {
                 <p className="font-label-caps text-on-surface-variant mt-1">OpenAI-compatible base URL. No trailing slash.</p>
               </div>
               <div>
-                <label className="block font-label-caps font-medium text-on-surface-variant mb-1.5">Model Name</label>
+                <label className="block text-[0.875rem] font-semibold text-on-surface mb-1.5">Model Name</label>
                 <input
                   type="text"
                   value={customModel}
@@ -361,10 +361,10 @@ export default function SettingsPage() {
         {/* Language */}
         <Card padding="lg">
           <div className="flex items-center gap-2.5 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-lg bg-primary/15 border border-primary/30 flex items-center justify-center">
               <IconGlobe />
             </div>
-            <h3 className="font-title-sm font-semibold text-on-surface">{strings.languageSection}</h3>
+            <h3 className="text-[1.125rem] font-bold text-on-surface">{strings.languageSection}</h3>
           </div>
           <Toggle
             options={[

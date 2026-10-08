@@ -15,7 +15,9 @@ import { ChatInput, WelcomeState, UsagePanel } from "@/components/chat";
 import GlossaryPanel from "@/components/GlossaryPanel";
 import { cn } from "@/lib/utils";
 import { recordSectorsCall } from "@/lib/usageTracker";
-import { GLOSSARY, parseTermChips } from "@/lib/glossary";
+import { GLOSSARY } from "@/lib/glossary";
+import MessageContent from "@/components/chat/MessageContent";
+import HistoryDrawer from "@/components/chat/HistoryDrawer";
 import type { GlossaryTerm, SectorsDataRef } from "@/lib/types";
 
 // Inline type to avoid @typescript-eslint/no-explicit-any
@@ -44,7 +46,8 @@ export default function ChatPage() {
   const customModel = useSettingsStore((s) => s.settings.llm.customModel ?? "");
   const strings = t(language);
 
-  const { messages, addMessage } = useChatStore();
+  const { messages, addMessage, conversations, activeId, newConversation, switchConversation, deleteConversation } = useChatStore();
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
   const [glossaryTerm, setGlossaryTerm] = useState<GlossaryTerm | null>(null);
@@ -52,6 +55,7 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (messages.length === 0) return;
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
@@ -61,6 +65,9 @@ export default function ChatPage() {
   async function fetchSectorsData(query: string): Promise<{ data: string; citations: SectorsDataRef[]; endpoints?: string[] }> {
     const citations: SectorsDataRef[] = [];
     const q = query.toLowerCase();
+
+    // Pure concept questions ("Apa itu PBV?") have no data to fetch — skip Sectors entirely.
+    if (isConceptQuery(query)) return { data: "", citations };
 
     try {
       // ── P1-1: Single-ticker intent detection (BEFORE screener fallback) ──
@@ -115,7 +122,11 @@ export default function ChatPage() {
       citations.push(res.refs);
       return { data: JSON.stringify(res.data, null, 2), citations };
     } catch (err: unknown) {
-      console.error("Sectors API error:", err);
+      const msg = (err as Error)?.message || "";
+      // The screener can't translate this question into a data filter — not an outage.
+      // Answer from general knowledge instead of surfacing an error.
+      if (msg.includes("NON_TRANSLATABLE_QUERY")) return { data: "", citations: [], endpoints: [] };
+      console.warn("Sectors API error:", msg);
       // P1-2: Return structured error so the chat UI can show a visible warning
       return {
         data: JSON.stringify({
@@ -127,6 +138,12 @@ export default function ChatPage() {
         endpoints: [],
       };
     }
+  }
+
+  function isConceptQuery(query: string): boolean {
+    const q = query.toLowerCase().trim();
+    const definitional = /^(apa itu|apa yang dimaksud|apa arti|jelaskan|what is|what are|define|explain|arti dari|maksud dari)\b/.test(q);
+    return definitional && extractSymbols(query).length === 0;
   }
 
   function extractSymbols(query: string): string[] {
@@ -216,8 +233,40 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-full">
+      {/* History bar */}
+      <div className="shrink-0 flex items-center justify-between px-4 py-2 border-b border-outline-variant/30">
+        <button
+          type="button"
+          data-testid="open-history"
+          onClick={() => setHistoryOpen(true)}
+          className="flex items-center gap-1.5 text-on-surface-variant hover:text-primary transition-colors text-body-sm"
+        >
+          <span className="material-symbols-outlined text-[20px]">history</span>
+          {language === "id" ? "Riwayat" : "History"}
+        </button>
+        <button
+          type="button"
+          onClick={() => newConversation()}
+          className="flex items-center gap-1 text-primary text-body-sm font-semibold"
+        >
+          <span className="material-symbols-outlined text-[18px]">add</span>
+          {language === "id" ? "Baru" : "New"}
+        </button>
+      </div>
+
+      <HistoryDrawer
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+        conversations={conversations}
+        activeId={activeId}
+        language={language}
+        onSelect={switchConversation}
+        onDelete={deleteConversation}
+        onNew={newConversation}
+      />
+
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 py-3 space-y-3">
         {/* Welcome */}
         {messages.length === 0 && (
           <WelcomeState
@@ -244,37 +293,17 @@ export default function ChatPage() {
 
             {/* Assistant bubble */}
             {msg.role === "assistant" && (
-              <div className="max-w-[85%]">
+              <div className="max-w-[92%]">
                 <div className={cn(
                   "bg-bg-secondary border border-border-default",
                   "rounded-lg rounded-bl-sm px-4 py-3",
-                  "text-body text-text-primary leading-relaxed",
-                  "whitespace-pre-wrap"
+                  "text-body text-text-primary leading-relaxed"
                 )}>
-                  {/* Render term chips */}
-                  {parseTermChips(msg.content).map((part, i) =>
-                    part.type === "chip" ? (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => setGlossaryTerm(GLOSSARY.find((g) => g.slug === part.slug) ?? null)}
-                        className={cn(
-                          "inline-flex items-center gap-0.5 mx-0.5",
-                          "bg-accent/15 hover:bg-accent/25 border border-accent/40",
-                          "text-accent rounded px-1.5 py-0.5 text-caption font-semibold",
-                          "cursor-pointer transition-colors duration-150"
-                        )}
-                        title={strings.tapToLearn}
-                      >
-                        <span>{part.content}</span>
-                        <svg className="w-3 h-3 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </button>
-                    ) : (
-                      <span key={i}>{part.content}</span>
-                    )
-                  )}
+                  <MessageContent
+                    content={msg.content}
+                    tapToLearn={strings.tapToLearn}
+                    onTermClick={(slug) => setGlossaryTerm(GLOSSARY.find((g) => g.slug === slug) ?? null)}
+                  />
                 </div>
 
                 {/* Citation toggle */}

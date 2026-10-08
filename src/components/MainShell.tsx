@@ -10,9 +10,9 @@ export default function MainShell({ children }: { children: React.ReactNode }) {
   const language = useSettingsStore((s) => s.settings.language);
 
   return (
-    <div className="flex flex-col h-screen bg-surface text-on-surface">
+    <div className="flex flex-col h-dvh bg-surface text-on-surface">
       <TopBar />
-      <div className="flex-1 overflow-hidden">{children}</div>
+      <div className="flex-1 min-h-0 overflow-hidden">{children}</div>
       <BottomNav language={language} />
     </div>
   );

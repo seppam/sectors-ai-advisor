@@ -55,7 +55,7 @@ export default function BottomNav({ language = "id" }: BottomNavProps) {
   }
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-50 pb-safe glass-bar shadow-[0_-2px_12px_rgba(0,0,0,0.12)]">
+    <nav className="relative shrink-0 z-40 pb-safe glass-bar border-t border-outline-variant/40">
       <div className="flex justify-around items-center h-16 px-space-xs">
         {NAV_ITEMS.map((item) => {
           const active = isActive(item);

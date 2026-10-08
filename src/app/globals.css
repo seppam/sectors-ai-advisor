@@ -347,3 +347,19 @@
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
+
+/* Rendered markdown inside assistant bubbles */
+.md-body > * + * { margin-top: 0.6rem; }
+.md-body p { margin: 0; }
+.md-body ul, .md-body ol { padding-left: 1.25rem; margin: 0.25rem 0; }
+.md-body ul { list-style: disc; }
+.md-body ol { list-style: decimal; }
+.md-body li + li { margin-top: 0.2rem; }
+.md-body strong { font-weight: 600; color: var(--color-on-surface); }
+.md-body em { color: var(--color-on-surface-variant); }
+.md-body code { font-family: var(--font-mono); font-size: 0.8em; background: var(--color-surface-container-high); padding: 0.1em 0.35em; border-radius: 4px; }
+.md-body pre { overflow-x: auto; background: var(--color-surface-container-high); padding: 0.6rem; border-radius: 8px; }
+.md-body table { width: 100%; border-collapse: collapse; font-size: 0.8125rem; display: block; overflow-x: auto; }
+.md-body th, .md-body td { border: 1px solid var(--color-outline-variant); padding: 0.3rem 0.5rem; text-align: left; }
+.md-body th { background: var(--color-surface-container-high); }
+.md-body h1, .md-body h2, .md-body h3 { font-weight: 600; margin-top: 0.5rem; }

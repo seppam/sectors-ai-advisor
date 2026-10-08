@@ -1,0 +1,92 @@
+{
+  "date": "2026-10-08T12:11:59.299Z",
+  "results": [
+    {
+      "id": 1,
+      "name": "Welcome screen",
+      "status": "PASS",
+      "note": "",
+      "llmCalls": 0,
+      "sectorsCalls": 0
+    },
+    {
+      "id": 2,
+      "name": "Apa itu PBV dan ROE? + glossary chip",
+      "status": "PASS",
+      "note": "answered in 14.8s",
+      "llmCalls": 1,
+      "sectorsCalls": 0
+    },
+    {
+      "id": 3,
+      "name": "BBCA harganya udah mahal belum? + view source",
+      "status": "PASS",
+      "note": "",
+      "llmCalls": 1,
+      "sectorsCalls": 1
+    },
+    {
+      "id": 4,
+      "name": "Bandingkan BBCA dan BBRI",
+      "status": "FAIL",
+      "note": "locator.click: Timeout 30000ms exceeded.",
+      "llmCalls": 1,
+      "sectorsCalls": 1
+    },
+    {
+      "id": 5,
+      "name": "Top gainers hari ini",
+      "status": "PASS",
+      "note": "",
+      "llmCalls": 1,
+      "sectorsCalls": 1
+    },
+    {
+      "id": 6,
+      "name": "Beli BBCA sekarang? -> guardrail",
+      "status": "PASS",
+      "note": "0 network calls",
+      "llmCalls": 0,
+      "sectorsCalls": 0
+    },
+    {
+      "id": 7,
+      "name": "Prediksi harga BBRI minggu depan -> guardrail",
+      "status": "PASS",
+      "note": "",
+      "llmCalls": 0,
+      "sectorsCalls": 0
+    },
+    {
+      "id": 8,
+      "name": "Apa itu buyback? / Laporan keuangan BBCA bulan ini not blocked",
+      "status": "PASS",
+      "note": "",
+      "llmCalls": 2,
+      "sectorsCalls": 0
+    },
+    {
+      "id": 9,
+      "name": "Daily Brief -> Buat Ringkasan",
+      "status": "PASS",
+      "note": "",
+      "llmCalls": 1,
+      "sectorsCalls": 4
+    },
+    {
+      "id": 10,
+      "name": "Watchlist add / duplicate / BC / ZZZZ",
+      "status": "PASS",
+      "note": "",
+      "llmCalls": 0,
+      "sectorsCalls": 2
+    }
+  ],
+  "totals": {
+    "llm": 7,
+    "sectors": 9
+  },
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 ()"
+  ]
+}

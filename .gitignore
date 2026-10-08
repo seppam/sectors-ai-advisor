@@ -41,3 +41,10 @@ tsconfig.tsbuildinfo
 *.png
 !docs/**/*.png
 !public/*.png
+video/raw/
+video/out/
+out/
+*.mp4
+*.webm
+*.mp3
+!docs/**/*.png

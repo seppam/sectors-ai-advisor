@@ -1,0 +1,66 @@
+{
+  "video": "page@eeaf5aa35599932c36ee482ae180155e.webm",
+  "duration": 155.193,
+  "flows": [
+    {
+      "id": 1,
+      "name": "Welcome screen",
+      "start": 8.003,
+      "end": 9.627
+    },
+    {
+      "id": 2,
+      "name": "Apa itu PBV dan ROE? + glossary chip",
+      "start": 9.627,
+      "end": 24.456
+    },
+    {
+      "id": 3,
+      "name": "BBCA harganya udah mahal belum? + view source",
+      "start": 24.456,
+      "end": 38.662
+    },
+    {
+      "id": 4,
+      "name": "Bandingkan BBCA dan BBRI",
+      "start": 38.662,
+      "end": 78.775
+    },
+    {
+      "id": 5,
+      "name": "Top gainers hari ini",
+      "start": 78.775,
+      "end": 89.643
+    },
+    {
+      "id": 6,
+      "name": "Beli BBCA sekarang? -> guardrail",
+      "start": 89.643,
+      "end": 93.915
+    },
+    {
+      "id": 7,
+      "name": "Prediksi harga BBRI minggu depan -> guardrail",
+      "start": 93.915,
+      "end": 98.797
+    },
+    {
+      "id": 8,
+      "name": "Apa itu buyback? / Laporan keuangan BBCA bulan ini not blocked",
+      "start": 98.797,
+      "end": 123.175
+    },
+    {
+      "id": 9,
+      "name": "Daily Brief -> Buat Ringkasan",
+      "start": 123.175,
+      "end": 145.782
+    },
+    {
+      "id": 10,
+      "name": "Watchlist add / duplicate / BC / ZZZZ",
+      "start": 145.782,
+      "end": 155.193
+    }
+  ]
+}

@@ -82,6 +82,8 @@ export default function WatchlistPage() {
         if (res?.data && (res.data as { overview?: unknown }).overview) {
           setStockData((prev) => ({ ...prev, [symbol]: toCompanyData(res.data) }));
           addItem({ symbol, addedAt: Date.now() });
+          setAddInput("");
+          setAddError("");
         } else {
           setAddError(
             language === "id"
@@ -95,10 +97,9 @@ export default function WatchlistPage() {
     } else {
       // No API key — add without price data
       addItem({ symbol, addedAt: Date.now() });
+      setAddInput("");
+      setAddError("");
     }
-
-    setAddInput("");
-    setAddError("");
   }
 
   return (

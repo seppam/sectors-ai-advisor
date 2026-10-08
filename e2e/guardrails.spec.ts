@@ -69,11 +69,11 @@ test.describe("Guardrail Integration (no LLM call)", () => {
   test("no LLM API call is made for blocked trade keywords", async ({ page }) => {
     let llmCalls = 0;
     await page.route(
-      /api\.anthropic\.com|api\.openai\.com|api\.deepseek\.com|openrouter\.ai/,
+      /api\.anthropic\.com|api\.openai\.com|api\.deepseek\.com|openrouter\.ai|api\.sectors\.app/,
       () => { llmCalls++; }
     );
 
-    const chatInput = page.locator("textarea").first();
+    const chatInput = page.locator("input[type='text']").first();
     await chatInput.fill("beli saham BBCA");
     await chatInput.press("Enter");
     await page.waitForTimeout(1000);
@@ -84,11 +84,11 @@ test.describe("Guardrail Integration (no LLM call)", () => {
   test("no LLM API call is made for blocked prediction keywords", async ({ page }) => {
     let llmCalls = 0;
     await page.route(
-      /api\.anthropic\.com|api\.openai\.com|api\.deepseek\.com|openrouter\.ai/,
+      /api\.anthropic\.com|api\.openai\.com|api\.deepseek\.com|openrouter\.ai|api\.sectors\.app/,
       () => { llmCalls++; }
     );
 
-    const chatInput = page.locator("textarea").first();
+    const chatInput = page.locator("input[type='text']").first();
     await chatInput.fill("prediksi harga saham BBRI");
     await chatInput.press("Enter");
     await page.waitForTimeout(1000);
@@ -99,11 +99,11 @@ test.describe("Guardrail Integration (no LLM call)", () => {
   test("no LLM API call is made for blocked crypto keywords", async ({ page }) => {
     let llmCalls = 0;
     await page.route(
-      /api\.anthropic\.com|api\.openai\.com|api\.deepseek\.com|openrouter\.ai/,
+      /api\.anthropic\.com|api\.openai\.com|api\.deepseek\.com|openrouter\.ai|api\.sectors\.app/,
       () => { llmCalls++; }
     );
 
-    const chatInput = page.locator("textarea").first();
+    const chatInput = page.locator("input[type='text']").first();
     await chatInput.fill("analisis bitcoin");
     await chatInput.press("Enter");
     await page.waitForTimeout(1000);

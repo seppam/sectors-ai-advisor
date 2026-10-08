@@ -24,10 +24,8 @@ test.describe("Chat Page", () => {
   });
 
   test("shows welcome state when no messages exist", async ({ page }) => {
-    const welcomeVisible =
-      (await page.getByText(/welcome| selamat datang/i).isVisible()) ||
-      (await page.getByText(/ask|tanyakan/i).isVisible());
-    expect(welcomeVisible).toBeTruthy();
+    await expect(page.getByText("Sectors AI Advisor").first()).toBeVisible();
+    await expect(page.getByText(/Apa itu PBV dan ROE/).first()).toBeVisible();
   });
 
   test("requires LLM API key to send messages", async ({ page }) => {
@@ -42,7 +40,7 @@ test.describe("Chat Page", () => {
 
     // Should show a warning about missing API key
     await expect(
-      page.getByText(/api key|llm api key|tidak diset/i)
+      page.getByText(/API Key belum diset/i).first()
     ).toBeVisible({ timeout: 5000 });
   });
 

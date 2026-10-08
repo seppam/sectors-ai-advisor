@@ -69,7 +69,7 @@ test.describe("Guardrail Integration (no LLM call)", () => {
   test("no LLM API call is made for blocked trade keywords", async ({ page }) => {
     let llmCalls = 0;
     await page.route(
-      /api\.anthropic\.com|api\.openai\.com|api\.deepseek\.com|openrouter\.ai|api\.sectors\.app/,
+      /api\.anthropic\.com|api\.openai\.com|api\.deepseek\.com|openrouter\.ai|api\.sectors\.app|\/api\/sectors/,
       () => { llmCalls++; }
     );
 
@@ -84,7 +84,7 @@ test.describe("Guardrail Integration (no LLM call)", () => {
   test("no LLM API call is made for blocked prediction keywords", async ({ page }) => {
     let llmCalls = 0;
     await page.route(
-      /api\.anthropic\.com|api\.openai\.com|api\.deepseek\.com|openrouter\.ai|api\.sectors\.app/,
+      /api\.anthropic\.com|api\.openai\.com|api\.deepseek\.com|openrouter\.ai|api\.sectors\.app|\/api\/sectors/,
       () => { llmCalls++; }
     );
 
@@ -99,7 +99,7 @@ test.describe("Guardrail Integration (no LLM call)", () => {
   test("no LLM API call is made for blocked crypto keywords", async ({ page }) => {
     let llmCalls = 0;
     await page.route(
-      /api\.anthropic\.com|api\.openai\.com|api\.deepseek\.com|openrouter\.ai|api\.sectors\.app/,
+      /api\.anthropic\.com|api\.openai\.com|api\.deepseek\.com|openrouter\.ai|api\.sectors\.app|\/api\/sectors/,
       () => { llmCalls++; }
     );
 

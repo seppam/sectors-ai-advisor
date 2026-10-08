@@ -1,6 +1,78 @@
 {
-  "date": "2026-10-08T12:17:36.671Z",
+  "date": "2026-10-08T12:20:03.664Z",
   "results": [
+    {
+      "id": 1,
+      "name": "Welcome screen",
+      "status": "PASS",
+      "note": "",
+      "llmCalls": 0,
+      "sectorsCalls": 0
+    },
+    {
+      "id": 2,
+      "name": "Apa itu PBV dan ROE? + glossary chip",
+      "status": "PASS",
+      "note": "answered in 11.2s",
+      "llmCalls": 1,
+      "sectorsCalls": 0
+    },
+    {
+      "id": 3,
+      "name": "BBCA harganya udah mahal belum? + view source",
+      "status": "PASS",
+      "note": "",
+      "llmCalls": 1,
+      "sectorsCalls": 0
+    },
+    {
+      "id": 4,
+      "name": "Bandingkan BBCA dan BBRI",
+      "status": "PASS",
+      "note": "",
+      "llmCalls": 1,
+      "sectorsCalls": 0
+    },
+    {
+      "id": 5,
+      "name": "Top gainers hari ini",
+      "status": "PASS",
+      "note": "",
+      "llmCalls": 1,
+      "sectorsCalls": 0
+    },
+    {
+      "id": 6,
+      "name": "Beli BBCA sekarang? -> guardrail",
+      "status": "PASS",
+      "note": "0 network calls",
+      "llmCalls": 0,
+      "sectorsCalls": 0
+    },
+    {
+      "id": 7,
+      "name": "Prediksi harga BBRI minggu depan -> guardrail",
+      "status": "PASS",
+      "note": "",
+      "llmCalls": 0,
+      "sectorsCalls": 0
+    },
+    {
+      "id": 8,
+      "name": "Apa itu buyback? / Laporan keuangan BBCA bulan ini not blocked",
+      "status": "PASS",
+      "note": "",
+      "llmCalls": 2,
+      "sectorsCalls": 0
+    },
+    {
+      "id": 9,
+      "name": "Daily Brief -> Buat Ringkasan",
+      "status": "PASS",
+      "note": "",
+      "llmCalls": 1,
+      "sectorsCalls": 0
+    },
     {
       "id": 10,
       "name": "Watchlist add / duplicate / BC / ZZZZ",
@@ -11,7 +83,7 @@
     }
   ],
   "totals": {
-    "llm": 0,
+    "llm": 7,
     "sectors": 0
   },
   "consoleErrors": [

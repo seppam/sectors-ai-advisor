@@ -49,7 +49,7 @@ const calls = { llm: 0, sectors: 0 };
 page.on("request", (r) => {
   const u = r.url();
   if (/openrouter\.ai|api\.anthropic\.com|api\.openai\.com|api\.deepseek\.com/.test(u)) calls.llm++;
-  if (/api\.sectors\.app/.test(u)) calls.sectors++;
+  if (/api\.sectors\.app|\/api\/sectors/.test(u)) calls.sectors++;
 });
 const badResponses = [];
 page.on("response", (r) => { if (/api\.sectors\.app/.test(r.url()) && r.status() >= 400) badResponses.push(`${r.status()} ${r.url().replace(/\?.*/, "")}`); });

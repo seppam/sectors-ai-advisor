@@ -312,7 +312,11 @@ export default function ChatPage() {
                   <div className="mt-1">
                     <button
                       type="button"
-                      onClick={() => setShowCitation((prev) => ({ ...prev, [msg.id]: !prev[msg.id] }))}
+                      onClick={() => {
+                        setShowCitation((prev) => ({ ...prev, [msg.id]: !prev[msg.id] }));
+                        // Keep the opened source list visible above the input bar.
+                        setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 60);
+                      }}
                       className="text-caption text-text-muted hover:text-accent transition-colors flex items-center gap-1"
                     >
                       <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

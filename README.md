@@ -196,13 +196,25 @@ Disclaimer enforced by the system prompt (no post-hoc string appending)
 
 ## 📸 Screenshots
 
-| Chat Interface | Landing Page |
-|---|---|
-| ![Chat](docs/screenshots/screenshot-chat.png) | ![Landing](docs/screenshots/screenshot-landing.png) |
+Captured from the verified live QA run (390×844) — see [`docs/QA-REPORT.md`](docs/QA-REPORT.md).
 
-| Settings | Mobile View |
-|---|---|
-| ![Settings](docs/screenshots/screenshot-settings.png) | ![Mobile](docs/screenshots/shot3-mobile.png) |
+| Welcome | Answer + term chips | Guardrail |
+|---|---|---|
+| ![Welcome](docs/screenshots/qa/01-welcome.png) | ![Answer](docs/screenshots/qa/02a-answer.png) | ![Guardrail](docs/screenshots/qa/06-guardrail-buy.png) |
+
+| Compare + sources | Daily brief | Watchlist |
+|---|---|---|
+| ![Compare](docs/screenshots/qa/04-compare.png) | ![Brief](docs/screenshots/qa/09b-brief.png) | ![Watchlist](docs/screenshots/qa/10c-zzzz.png) |
+
+---
+
+## 🧪 Testing
+
+```bash
+npx playwright install chromium
+npx playwright test                 # 28 e2e tests (no API keys needed)
+node scripts/qa-live.mjs            # live 10-flow QA + screen recording (needs QA_* keys in .env.local)
+```
 
 ---
 
@@ -213,7 +225,7 @@ Disclaimer enforced by the system prompt (no post-hoc string appending)
 | 1-minute teaser | _TBD — add YouTube URL_ |
 | 3-minute judging video | _TBD — add YouTube URL_ |
 
-Video source (Remotion compositions and scripts) lives in [`/video`](video).
+Video source (Remotion compositions, narration script, VO generator) lives in [`/video`](video); rendered `.mp4`/`.mp3` files are not committed.
 
 ---
 

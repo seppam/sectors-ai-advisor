@@ -19,6 +19,7 @@ fs.mkdirSync(vidDir, { recursive: true });
 
 const only = process.argv[2]?.split(",").map(Number); // e.g. `node scripts/qa-live.mjs 6,7` (free flows)
 const results = [];
+let marks0 = null; void marks0;
 const timeline = [];
 
 const browser = await chromium.launch();
@@ -45,7 +46,21 @@ await page.addInitScript((e) => {
   }
 }, { sectors: env.QA_SECTORS_KEY, provider: env.QA_LLM_PROVIDER, key: env.QA_LLM_KEY, base: env.QA_LLM_BASE_URL, model: env.QA_LLM_MODEL });
 
+// Visible tap indicator so recorded footage shows where the user touches.
+await page.addInitScript(() => {
+  addEventListener("pointerdown", (e) => {
+    const d = document.createElement("div");
+    d.style.cssText = `position:fixed;left:${e.clientX - 22}px;top:${e.clientY - 22}px;width:44px;height:44px;border-radius:50%;` +
+      "background:rgba(70,241,197,.35);border:2px solid #46f1c5;z-index:2147483647;pointer-events:none;transition:transform .5s ease-out,opacity .5s ease-out";
+    document.documentElement.appendChild(d);
+    requestAnimationFrame(() => { d.style.transform = "scale(1.7)"; d.style.opacity = "0"; });
+    setTimeout(() => d.remove(), 600);
+  }, true);
+});
+
 const calls = { llm: 0, sectors: 0 };
+const marks = {};
+const mark = (n) => { marks[n] = now(); };
 page.on("request", (r) => {
   const u = r.url();
   if (/openrouter\.ai|api\.anthropic\.com|api\.openai\.com|api\.deepseek\.com/.test(u)) calls.llm++;
@@ -67,12 +82,28 @@ async function ask(text, { typed = true } = {}) {
   if (typed) await input().pressSequentially(text, { delay: 45 }); else await input().fill(text);
   await pause(400);
   const tSend = now();
+  mark(`send:${text.slice(0, 12)}`);
   await input().press("Enter");
   // guardrail answers are instant; LLM answers take a few seconds
   await page.waitForFunction((n) => document.querySelectorAll(".md-body").length > n, before, { timeout: 90_000 });
   await page.waitForFunction(() => !document.body.innerText.includes("Menganalisis..."), null, { timeout: 90_000 });
+  mark(`answer:${text.slice(0, 12)}`);
   await pause(900);
   return { tSend, tDone: now() };
+}
+/** Scroll so the latest assistant answer starts at the top, then glide down so a viewer can read it. */
+async function readAnswer(ms = 3500) {
+  await page.evaluate(() => {
+    const boxes = document.querySelectorAll(".md-body");
+    const last = boxes[boxes.length - 1];
+    const scroller = last?.closest(".overflow-y-auto");
+    if (!last || !scroller) return;
+    const bubble = last.parentElement?.parentElement ?? last;
+    scroller.scrollTop += bubble.getBoundingClientRect().top - scroller.getBoundingClientRect().top - 8;
+  });
+  await pause(900);
+  const steps = 14;
+  for (let i = 0; i < steps; i++) { await page.mouse.wheel(0, 70); await pause(ms / steps); }
 }
 const shot = (n) => page.screenshot({ path: path.join(shots, n + ".png") });
 async function newChat() { await page.getByRole("button", { name: /Baru/ }).first().click(); await pause(400); }
@@ -111,17 +142,23 @@ await flow(2, "Apa itu PBV dan ROE? + glossary chip", async () => {
   const before = Date.now();
   await page.waitForFunction(() => document.querySelectorAll(".md-body").length > 0, null, { timeout: 90_000 });
   await page.waitForFunction(() => !document.body.innerText.includes("Menganalisis..."), null, { timeout: 90_000 });
-  await pause(1200);
+  mark("f2:answer");
+  await pause(600);
+  await readAnswer(3000);
   const userBubbles = await page.getByText("Apa itu PBV dan ROE?", { exact: true }).count();
   expectOk(userBubbles >= 1, "no user bubble");
   expectOk((await bubbles().count()) === 1, "assistant bubble missing/duplicated");
   await shot("02a-answer");
   const chip = page.locator(".md-body button").first();
   expectOk(await chip.count(), "no term chip rendered");
+  await page.evaluate(() => document.querySelector(".md-body button")?.scrollIntoView({ block: "center", behavior: "instant" }));
+  await pause(700);
+  mark("f2:chip-tap");
   await chip.click(); await pause(900);
   expectOk(await page.getByText("Penjelasan", { exact: true }).isVisible(), "glossary panel not open");
   await shot("02b-glossary");
-  await pause(1500);
+  mark("f2:glossary-open");
+  await pause(4500);
   await page.mouse.click(195, 80); await pause(500);
   return `answered in ${((Date.now() - before) / 1000).toFixed(1)}s`;
 });
@@ -130,21 +167,29 @@ await flow(3, "BBCA harganya udah mahal belum? + view source", async () => {
   await newChat();
   await ask("BBCA harganya udah mahal belum?");
   await shot("03a-bbca");
+  await readAnswer(4000);
+  await page.getByText("Lihat Sumber Data").last().scrollIntoViewIfNeeded(); await pause(500);
+  mark("f3:source-tap");
   await page.getByText("Lihat Sumber Data").last().click(); await pause(700);
   const t = await page.locator("body").innerText();
   expectOk(t.includes("/company/report/BBCA"), "source panel does not show Sectors company report endpoint");
   await shot("03b-source");
-  await pause(1500);
+  mark("f3:source-open");
+  await pause(3500);
 });
 
 await flow(4, "Bandingkan BBCA dan BBRI", async () => {
   await newChat();
   await ask("Bandingkan BBCA dan BBRI");
+  await readAnswer(4500);
+  await page.getByText("Lihat Sumber Data").last().scrollIntoViewIfNeeded(); await pause(400);
+  mark("f4:source-tap");
   await page.getByText("Lihat Sumber Data").last().click(); await pause(700);
   const t = await page.locator("body").innerText();
   expectOk(t.includes("BBCA company report") && t.includes("BBRI company report"), "expected 2 citations");
   await shot("04-compare");
-  await pause(1500);
+  mark("f4:source-open");
+  await pause(3000);
 });
 
 await flow(5, "Top gainers hari ini", async () => {
@@ -153,7 +198,7 @@ await flow(5, "Top gainers hari ini", async () => {
   const t = await page.locator("body").innerText();
   expectOk(/FORU|VICI|BELI|[A-Z]{4}/.test(t), "no tickers in answer");
   await shot("05-gainers");
-  await pause(1500);
+  await readAnswer(3000);
 });
 
 await flow(6, "Beli BBCA sekarang? -> guardrail", async () => {
@@ -162,7 +207,7 @@ await flow(6, "Beli BBCA sekarang? -> guardrail", async () => {
   await ask("Beli BBCA sekarang?");
   expectOk(calls.llm === c.llm && calls.sectors === c.sectors, "network call made for blocked query");
   await shot("06-guardrail-buy");
-  await pause(1500);
+  await pause(3500);
   return "0 network calls";
 });
 
@@ -173,7 +218,7 @@ await flow(7, "Prediksi harga BBRI minggu depan -> guardrail", async () => {
   expectOk(calls.llm === c.llm && calls.sectors === c.sectors, "network call made for blocked query");
   expectOk((await page.locator("body").innerText()).includes("Di Luar Cakupan"), "no out-of-scope block");
   await shot("07-guardrail-predict");
-  await pause(1500);
+  await pause(3500);
 });
 
 await flow(8, "Apa itu buyback? / Laporan keuangan BBCA bulan ini not blocked", async () => {
@@ -190,12 +235,14 @@ await flow(8, "Apa itu buyback? / Laporan keuangan BBCA bulan ini not blocked", 
 await flow(9, "Daily Brief -> Buat Ringkasan", async () => {
   await page.getByRole("link", { name: /Ringkasan/ }).click(); await pause(1000);
   await shot("09a-brief-empty");
+  mark("f9:generate-tap");
   await page.getByRole("button", { name: /Buat Ringkasan/ }).click();
   await page.waitForFunction(() => /Top|Penguat|Gainers/i.test(document.body.innerText) && !document.body.innerText.includes("Membuat"), null, { timeout: 120_000 });
+  mark("f9:brief-ready");
   await pause(2500);
   await page.evaluate(() => document.querySelector(".overflow-y-auto")?.scrollTo(0, 0));
   await shot("09b-brief");
-  await page.evaluate(() => document.querySelector(".overflow-y-auto")?.scrollTo(0, 700)); await pause(1200);
+  for (let i = 0; i < 16; i++) { await page.mouse.wheel(0, 60); await pause(260); }
   await shot("09c-brief-scroll");
 });
 
@@ -203,19 +250,24 @@ await flow(10, "Watchlist add / duplicate / BC / ZZZZ", async () => {
   await page.getByRole("link", { name: /Pantau/ }).click(); await pause(1000);
   const field = page.locator("input").first();
   const addBtn = page.getByRole("button", { name: /tambah|add/i });
-  await field.pressSequentially("BBCA", { delay: 80 }); await addBtn.click(); await pause(2500);
-  expectOk(await page.getByText("BBCA").first().isVisible(), "BBCA not added");
+  mark("f10:start");
+  await field.pressSequentially("BBCA", { delay: 110 }); await addBtn.click();
+  await page.waitForFunction(() => document.body.innerText.includes("P/E"), null, { timeout: 20_000 }).catch(() => {});
+  await pause(1500);
+  expectOk(await page.getByText("P/E").first().isVisible(), "BBCA not added");
   await shot("10a-added");
   await field.fill("BBCA"); await addBtn.click(); await pause(700);
   expectOk(/sudah ada/i.test(await page.locator("body").innerText()), "no duplicate error");
   await shot("10b-duplicate");
   await field.fill("BC"); await addBtn.click(); await pause(700);
   expectOk(/tidak valid/i.test(await page.locator("body").innerText()), "no format error for BC");
-  await field.fill("ZZZZ"); await addBtn.click(); await pause(2500);
+  await field.fill("ZZZZ"); await addBtn.click();
+  await page.waitForFunction(() => /tidak ditemukan/i.test(document.body.innerText), null, { timeout: 20_000 }).catch(() => {});
+  await pause(800);
   expectOk(/tidak ditemukan/i.test(await page.locator("body").innerText()), "ZZZZ not rejected");
   expectOk((await page.getByText("ZZZZ", { exact: true }).count()) === 0 || true, "");
   await shot("10c-zzzz");
-  await pause(1200);
+  await pause(2500);
 });
 
 const tEnd = now();
@@ -223,7 +275,7 @@ await ctx.close(); // flushes video
 const video = fs.readdirSync(vidDir).filter((f) => f.endsWith(".webm")).map((f) => ({ f, t: fs.statSync(path.join(vidDir, f)).mtimeMs })).sort((a, b) => b.t - a.t)[0]?.f;
 await browser.close();
 
-fs.writeFileSync(path.join(root, "video/qa-timeline.json"), JSON.stringify({ video, duration: tEnd, flows: timeline }, null, 2));
+fs.writeFileSync(path.join(root, "video/qa-timeline.json"), JSON.stringify({ video, duration: tEnd, flows: timeline, marks }, null, 2));
 fs.writeFileSync(path.join(root, "docs/qa-results.json"), JSON.stringify({ date: new Date().toISOString(), results, totals: calls, consoleErrors: [...new Set(consoleErrors)], badResponses }, null, 2));
 console.table(results.map((r) => ({ id: r.id, name: r.name, status: r.status, llm: r.llmCalls, sectors: r.sectorsCalls, note: r.note.slice(0, 70) })));
 console.log("totals", calls, "video", video);

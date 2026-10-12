@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000")),
   title: "Sectors AI Advisor — Hackathon 2026",
   description:
     "AI-powered investment assistant for Indonesian retail investors. Built on Sectors API + LLM. Sectors Hackathon 2026 Track 01: AI Agents & Assistants.",

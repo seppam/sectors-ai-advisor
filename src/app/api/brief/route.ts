@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchDailyBriefData } from "@/lib/sectorsApi";
+import { killSwitch, rateLimit, bodyTooLarge } from "@/lib/apiGuard";
 
 export const runtime = "edge";
 
 export async function POST(req: NextRequest) {
+  const blocked = killSwitch() ?? bodyTooLarge(req, 8_000) ?? rateLimit(req, "brief", 10);
+  if (blocked) return blocked;
   try {
     const { sectors } = await req.json();
 

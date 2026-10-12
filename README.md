@@ -180,19 +180,18 @@ Response rendered with [TERM:slug:label] chips → interactive glossary
 Disclaimer enforced by the system prompt (no post-hoc string appending)
 ```
 
-**API routes** (`/api/chat`, `/api/brief`, `/api/sectors`) are optional server-side proxies that read keys from `.env.local`. The default UI flow calls the providers directly from the browser with the keys saved in Settings.
+**API routes** (`/api/chat`, `/api/brief`, `/api/sectors`) are optional server-side proxies that read keys from `.env.local`. The default UI flow calls the LLM providers directly from the browser with the keys saved in Settings; only Sectors requests use `/api/sectors` (CORS). `/api/chat` and `/api/brief` are not used by the UI.
 
 ---
 
 ## 🌐 Deploy to Vercel
 
-1. Push to GitHub
-2. Go to [vercel.com](https://vercel.com) → New Project → Import from GitHub
-3. Add environment variables in Vercel dashboard:
-   - `SECTORS_API_KEY`
-   - `ANTHROPIC_API_KEY` (and/or `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`, `OPENROUTER_API_KEY`)
-4. Deploy — Vercel auto-detects Next.js
-5. Add your Vercel URL to Settings → Custom Base URL (optional)
+The app is **BYOK** (bring your own key): visitors enter their own Sectors + LLM keys in Settings, stored in their browser only.
+
+1. Push to GitHub, then Vercel → Add New Project → Import the repo (Framework preset: Next.js, defaults otherwise)
+2. **Public demo: do NOT set `SECTORS_API_KEY` or any `*_API_KEY` env vars.** Server-side keys act as an open fallback on `/api/sectors`, `/api/brief` and `/api/chat`, so anyone could spend your credits. If you must set them, use dedicated demo keys with a hard spend cap.
+3. Optional: `DEMO_DISABLED=1` is a kill switch (all `/api/*` return 503 after redeploy); `NEXT_PUBLIC_SITE_URL` sets the OpenGraph base URL.
+4. Deploy. See `.env.local.example` for the full variable list.
 
 ---
 
@@ -214,7 +213,7 @@ Captured from the verified live QA run (390×844) — see [`docs/QA-REPORT.md`](
 
 ```bash
 npx playwright install chromium
-npx playwright test                 # 28 e2e tests (no API keys needed)
+npx playwright test                 # 32 e2e tests (no API keys needed; upstream calls are mocked)
 node scripts/qa-live.mjs            # live 10-flow QA + screen recording to qa-recordings/ (needs QA_* keys in .env.local)
 ```
 
@@ -247,4 +246,5 @@ Repository: https://github.com/seppam/sectors-ai-advisor
 - Sectors API credits: most endpoints cost **1 credit** per call
 - The LLM is abstracted behind a provider interface — swap providers in Settings with no code changes
 - **No automated trade execution** — the app analyzes and explains data only
+- API routes have a best-effort per-IP rate limit, body-size limits and a `DEMO_DISABLED` kill switch
 - Guardrail debug endpoint (`/api/debug/guardrail`) is blocked in production

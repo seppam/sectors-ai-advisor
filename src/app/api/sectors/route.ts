@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import { killSwitch, rateLimit, bodyTooLarge } from "@/lib/apiGuard";
 
 export const runtime = "edge";
 
 export async function POST(req: NextRequest) {
+  const blocked = killSwitch() ?? bodyTooLarge(req, 8_000) ?? rateLimit(req, "sectors", 60);
+  if (blocked) return blocked;
   try {
     const { endpoint, params } = await req.json();
 

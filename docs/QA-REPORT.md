@@ -1,7 +1,7 @@
 # QA Report — Sectors AI Advisor
 
 Run: 8 Oct 2026, production build (`next build && next start`), Chromium 390×844 @2x, **live** Sectors API v2 + OpenRouter (`deepseek/deepseek-chat-v3-0324`).
-Driver: [`scripts/qa-live.mjs`](../scripts/qa-live.mjs). Screenshots: [`docs/screenshots/qa/`](screenshots/qa). Unit/e2e: `npx playwright test` (28 tests).
+Driver: [`scripts/qa-live.mjs`](../scripts/qa-live.mjs). Screenshots: [`docs/screenshots/qa/`](screenshots/qa). Unit/e2e: `npx playwright test` (28 at the time of the 8 Oct run; 32 now).
 
 | # | Flow | Result | Notes |
 |---|---|---|---|

@@ -2,9 +2,11 @@
 
 **Sectors Hackathon 2026 · Track 1: AI Agents & Assistants**
 
-**Team:** cobacobaberhadiah · **Member:** Muhamad Septian Pamungkas
+**Team:** cobacobaberhadiah (solo) · **Member:** Muhamad Septian Pamungkas
 
 AI-powered investment assistant for Indonesian retail investors. Translates complex IDX market data from the **Sectors API v2** into plain-language insights with in-line glossary chips, source citations on every answer, daily market briefs, watchlist tracking and conversation history.
+
+> **Not hosted live.** The app needs a Sectors API key with available quota (plus an LLM key), and the author no longer has Sectors API quota, so there is no public deployment. See the [demo videos](#-demo-videos) for a walkthrough, or run it locally with your own keys (below).
 
 ---
 
@@ -22,7 +24,7 @@ Requires Node.js 20+.
 
 ### 2. Configure Environment
 
-Copy the example env file and fill in your API keys:
+For local use you can either enter keys in the Settings tab (recommended) or copy the example env file for local-only fallbacks:
 
 ```bash
 cp .env.local.example .env.local
@@ -184,14 +186,9 @@ Disclaimer enforced by the system prompt (no post-hoc string appending)
 
 ---
 
-## 🌐 Deploy to Vercel
+## 🌐 Self-hosting (optional)
 
-The app is **BYOK** (bring your own key): visitors enter their own Sectors + LLM keys in Settings, stored in their browser only.
-
-1. Push to GitHub, then Vercel → Add New Project → Import the repo (Framework preset: Next.js, defaults otherwise)
-2. **Public demo: do NOT set `SECTORS_API_KEY` or any `*_API_KEY` env vars.** Server-side keys act as an open fallback on `/api/sectors`, `/api/brief` and `/api/chat`, so anyone could spend your credits. If you must set them, use dedicated demo keys with a hard spend cap.
-3. Optional: `DEMO_DISABLED=1` is a kill switch (all `/api/*` return 503 after redeploy); `NEXT_PUBLIC_SITE_URL` sets the OpenGraph base URL.
-4. Deploy. See `.env.local.example` for the full variable list.
+The app is **BYOK** (bring your own key): users enter their own Sectors + LLM keys in Settings, stored in their browser only. If you host it yourself, leave `SECTORS_API_KEY` and all `*_API_KEY` server env vars **unset**, otherwise they act as an open fallback on `/api/sectors`, `/api/brief` and `/api/chat`. Optional: `DEMO_DISABLED=1` is a kill switch (all `/api/*` return 503); `NEXT_PUBLIC_SITE_URL` sets the OpenGraph base URL. See `.env.local.example` for the variable list.
 
 ---
 

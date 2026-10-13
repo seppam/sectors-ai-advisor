@@ -214,6 +214,35 @@ npx playwright test                 # 32 e2e tests (no API keys needed; upstream
 node scripts/qa-live.mjs            # live 10-flow QA + screen recording to qa-recordings/ (needs QA_* keys in .env.local)
 ```
 
+### Test scenarios
+
+The live QA run has **10 scenarios**, driven by [`scripts/qa-live.mjs`](scripts/qa-live.mjs) against the real Sectors API v2 and a real LLM (OpenRouter, `deepseek/deepseek-chat-v3-0324`). Last recorded run: **8 October 2026**, production build, Chromium 390×844. Result in [`docs/QA-REPORT.md`](docs/QA-REPORT.md): **10 of 10 PASS**, 7 LLM calls in total (each under US$0.01). Screenshots are in [`docs/screenshots/qa/`](docs/screenshots/qa).
+
+| # | Scenario | What is asked / done | Expected behaviour or guardrail | Result (8 Oct 2026) |
+|---|---|---|---|---|
+| 1 | Welcome screen | Open `/chat` | Logo loads, 3 feature pills, 4 example questions | PASS |
+| 2 | Concept question | "Apa itu PBV dan ROE?", then tap a term chip | Separate user and assistant bubbles; glossary panel opens; no Sectors call for concept questions | PASS |
+| 3 | Valuation question | "BBCA harganya udah mahal belum?", then view source | Answer cites BBCA data; source panel lists `/company/report/BBCA/` | PASS |
+| 4 | Comparison | "Bandingkan BBCA dan BBRI" | Two citations (BBCA and BBRI company reports) | PASS |
+| 5 | Market movers | "Top gainers hari ini" | Real movers from `/companies/top-changes/` | PASS |
+| 6 | Guardrail: trade request | "Beli BBCA sekarang?" | Blocked; 0 network calls (no LLM, no Sectors) | PASS |
+| 7 | Guardrail: price prediction | "Prediksi harga BBRI minggu depan" | "Di Luar Cakupan" block; 0 network calls | PASS |
+| 8 | No false positives | "Apa itu buyback?" and "Laporan keuangan BBCA bulan ini" | Neither is blocked; both answered | PASS |
+| 9 | Daily Brief | Summary tab, "Buat Ringkasan" | Top gainers/losers, foreign flow, news and an AI summary | PASS |
+| 10 | Watchlist validation | Add BBCA, BBCA again, "BC", "ZZZZ" | Duplicate gives "sudah ada"; "BC" gives invalid format; "ZZZZ" gives "tidak ditemukan" | PASS |
+
+Notes on what this does and does not show:
+- Because LLM wording varies between runs, the checks verify routing, citations, guardrails and UI state, not exact answer text.
+- The 10 scenarios were run together in one recorded session. Scenarios 8 and 10 each bundle several sub-checks (2 and 4 respectively).
+- Only the 8 October 2026 run is recorded in the repo; the per-run `results.json` is written to `qa-recordings/` (gitignored) and is not committed.
+
+**Re-run it.** `scripts/qa-live.mjs` reads your own keys from `.env.local` (never committed): `QA_SECTORS_KEY`, `QA_LLM_PROVIDER`, `QA_LLM_KEY`, `QA_LLM_BASE_URL`, `QA_LLM_MODEL`. Start the app (`npm run build && npm start`, default `http://localhost:3000`, override with `QA_BASE_URL`), then:
+
+```bash
+node scripts/qa-live.mjs          # all 10 scenarios (uses live API credits)
+node scripts/qa-live.mjs 6,7      # only selected scenarios; 6 and 7 are guardrail checks that make no API calls
+```
+
 ---
 
 ## 🎬 Demo Videos
